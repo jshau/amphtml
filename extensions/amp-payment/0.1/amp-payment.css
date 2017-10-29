@@ -1,0 +1,58 @@
+.form-row {
+    margin: 16px 16px 0;
+  }
+.form-row label {
+  display: block;
+  padding: 0 4px;
+  color: #333;
+}
+.form-row input {
+  display: block;
+  width: calc(100% - 16px);
+  border: 0;
+  border-radius: 3px;
+  padding: 8px;
+}
+.form-row .tip {
+  padding: 4px;
+  color: #777;
+}
+.subtitle {
+  font-weight: bold;
+}
+.card-row {
+  display: flex;
+  flex-direction: row;
+}
+.card-number {
+  width: 50%;
+}
+.card-exp-date {
+  width: 25%;
+  margin-left: 10px;
+}
+.card-cvn {
+  width: 15%;
+  margin-left: 10px;
+}
+.next-button {
+    display: flex;
+    flex-direction: row;
+    margin: 10px 0;
+    width: 64%;
+    margin-left: auto;
+  }
+.next-button>a {
+  border-radius: 3px;
+  background: #ff7300;
+  text-decoration: none;
+  color: white;
+  height: 30px;
+  margin-right: 10px;
+  line-height: 26px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 6px 10px 0px 10px;
+}

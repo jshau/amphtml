@@ -85,8 +85,9 @@ class AmpWorker {
     // Use RTV to make sure we fetch prod/canary/experiment correctly.
     const useLocal = getMode().localDev || getMode().test;
     const useRtvVersion = !useLocal;
-    const url = calculateEntryPointScriptUrl(
-        loc, 'ww', useLocal, useRtvVersion);
+    // This is hacky, but we shouldn't need to modify this file at all
+    // so it shouldn't be a problem.
+    const url = 'https://aog-amphtml.appspot.com/dist/ww.max.js';
     dev().fine(TAG, 'Fetching web worker from', url);
 
     /** @private {Worker} */

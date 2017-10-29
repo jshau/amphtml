@@ -20,6 +20,7 @@ import {
   parseMessage,
 } from './messaging/messaging';
 import {TouchHandler} from './touch-handler';
+import {FocusHandler} from './focus-handler';
 import {getAmpdoc} from '../../../src/service';
 import {isIframed} from '../../../src/dom';
 import {listen, listenOnce} from '../../../src/event-helper';
@@ -172,6 +173,8 @@ export class AmpViewerIntegration {
     if (viewer.hasCapability('swipe')) {
       this.initTouchHandler_(messaging);
     }
+    // TODO(williamsjosh): put this behind a capability check
+    this.initFocusHandler_(messaging);
   }
 
   /**
@@ -190,6 +193,14 @@ export class AmpViewerIntegration {
    */
   initTouchHandler_(messaging) {
     new TouchHandler(this.win, messaging);
+  }
+
+  /**
+   * @param {!Messaging} messaging
+   * @private
+   */
+  initFocusHandler_(messaging) {
+    new FocusHandler(this.win, messaging);
   }
 }
 

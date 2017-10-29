@@ -1,0 +1,19 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /dist
+  static_dir: dist
+  http_headers:
+    Access-Control-Allow-Origin: "*"
+- url: /.*
+  script: main.app
+
+skip_files:
+# skip dot files
+- ^\.
+# skip all directories except the dist directories
+- ^(3p|ads|build|build-system|builtins|contributing|examples|extensions|node_modules|screenshots|spec|src|test|testing|third_party|tools|validator|viewer-api)
+# skip all md files
+- \.md$

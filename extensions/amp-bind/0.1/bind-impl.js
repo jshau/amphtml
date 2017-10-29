@@ -145,6 +145,7 @@ export class Bind {
 
     /** @const @private {!../../../src/service/viewer-impl.Viewer} */
     this.viewer_ = Services.viewerForDoc(this.ampdoc);
+    this.viewer_.onMessage('setState', this.setStateFromViewer_.bind(this));
 
     const bodyPromise = (opt_win)
         ? waitForBodyPromise(opt_win.document)
@@ -173,6 +174,18 @@ export class Bind {
   adoptEmbedWindow(embedWin) {
     installServiceInEmbedScope(
         embedWin, 'bind', new Bind(this.ampdoc, embedWin));
+  }
+
+  setStateFromViewer_(data) {
+    return this.initializePromise_
+      .then(() => {
+        return this.setState(data.state);
+      })
+      .then(() => {
+        return {
+          rendered: true
+        };
+      });
   }
 
   /**

@@ -139,6 +139,9 @@ export class AmpForm {
     /** @const @private {!../../../src/service/resources-impl.Resources} */
     this.resources_ = Services.resourcesForDoc(this.form_);
 
+    /** @const @private {!../../../src/service/viewer-impl.Viewer} */
+    this.viewer_ = Services.viewerForDoc(this.form_);
+
     /** @const @private {string} */
     this.method_ = (this.form_.getAttribute('method') || 'GET').toUpperCase();
 
@@ -279,6 +282,18 @@ export class AmpForm {
     this.form_.addEventListener('input', e => {
       checkUserValidityAfterInteraction_(dev().assertElement(e.target));
       this.validator_.onInput(e);
+    });
+
+    this.form_.addEventListener('focus', e => {
+      const attributeObject = {};
+      for (let i = 0; i < e.target.attributes.length; i++) {
+        let attribute = e.target.attributes[i];
+        attributeObject[attribute.name] = attribute.value;
+      }
+      this.viewer_.sendMessage('focus', {
+        tagName: e.target.tagName,
+        attributes: attributeObject
+      });
     });
   }
 
