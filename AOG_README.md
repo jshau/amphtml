@@ -6,9 +6,9 @@
 # Deploying to Internal App Engine
 
 1.  Run `gulp build`
-2.  Run `gcloud app deploy --no-promote --project aog-amphtml`
+2.  Run `gcloud app deploy --no-promote --project google.com:aog-amp-actions-amphtml`
 3.  Go to the [App Engine versions page for the GCP
-    project](https://pantheon.corp.google.com/appengine/versions?project=aog-amphtml).
+    project](https://pantheon.corp.google.com/appengine/versions?project=google.com:aog-amp-actions-amphtml).
     You should see a new version deployed by you, but the traffic allocation
     will be set to 0% (so it won't actually be serving to users of
     go/fandango-amp-demo).
