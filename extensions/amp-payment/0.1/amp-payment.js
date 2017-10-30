@@ -3,16 +3,29 @@
  * Should be built under ampproject/amphtml.
  */
 import {CSS} from '../../../build/amp-payment-0.1.css';
+import {ActionTrust} from '../../../src/action-trust';
+import {createCustomEvent} from '../../../src/event-helper';
 import {Services} from '../../../src/services';
 import {installStylesForDoc} from '../../../src/style-installer';
+import {toWin} from '../../../src/types';
 
 /** @const {string} */
 const TAG = 'amp-payment';
 
+const logoUrl =
+    'https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_32dp.png';
+
 class AmpPayment extends AMP.BaseElement {
+
   /** @param {!AmpElement} element */
   constructor(element) {
     super(element);
+
+    /** @const @private {!Window} */
+    this.win_ = toWin(element.ownerDocument.defaultView);
+
+    /** @const @private {!../../../src/service/action-impl.ActionService} */
+    this.actions_ = Services.actionServiceForDoc(element);
   }
 
   /** @override */
@@ -33,8 +46,7 @@ class AmpPayment extends AMP.BaseElement {
 
   /** @override */
   buildCallback() {
-    // Don't parse or fetch in prerender mode.
-    this.registerAction('load', this.loadPayments_.bind(this));
+    this.renderButton_();
   }
 
   /** @override */
@@ -43,47 +55,36 @@ class AmpPayment extends AMP.BaseElement {
   }
 
   /** @private */
-  loadPayments_() {
+  loadPayment_() {
     const viewer = Services.viewerForDoc(this.getAmpDoc());
-    viewer.whenFirstVisible().then(viewer.sendMessage('loadPayments', {}));
-    if (!this.registerRenderPayments_) {
-      this.registerRenderPayments_ = true;
-      viewer.onMessage('renderPayments', this.render_.bind(this));
-    }
+    viewer.whenFirstVisible()
+        .then(() => viewer.sendMessageAwaitResponse('loadPayments', {}))
+        .then(this.completedCallback_.bind(this));
   }
 
   /** @private */
-  render_(data) {
+  renderButton_() {
     while (this.element.firstChild) {
       this.element.removeChild(this.element.firstChild);
     }
-    // Starts with some basic operations.
-    const div = global.document.createElement('div');
-    div.innerHTML = '<form' +
-        'id="checkout"' +
-        'method="post"' +
-        'action-xhr="/api/movie/{{movie.id}}/theater/{{theater.id}}/buy/{{showtime.time}}/checkout">' +
-        '<div class="form-row">' +
-        '<p class="subtitle"> Add a new credit or debit card </p>' +
-        '<div class="card-row">' +
-        '  <div class="card-number">' +
-        '    <label>Card number</label>' +
-        '    <input type="text" name="cardNumber" placeholder="4111111111111111">' +
-        '  </div>' +
-        '  <div class="card-exp-date">' +
-        '    <label>Exp date</label>' +
-        '    <input type="text" name="expirationDate" placeholder="mm/yy">' +
-        '  </div>' +
-        '  <div class="card-cvn">' +
-        '    <label>CVN</label>' +
-        '    <input type="text" name="cvn" placeholder="123">' +
-        '  </div>' +
-        '</div>' +
-        '</form>' +
-        '<div class="next-button">' +
-        '  <a tabindex="1" on="tap:checkout.submit">PLACE ORDER</a>' +
-        '</div>';
-    this.element.appendChild(div);
+
+    const button = global.document.createElement('button');
+    button.addEventListener('click', this.loadPayment_.bind(this));
+    button.classList.add('amp-payment-button');
+
+    this.element.appendChild(button);
+  }
+
+  /** @private */
+  completedCallback_(data) {
+    const name = 'completed';
+    const eventPayload = {
+      cardNumber: data.cardNumber,
+      cardExpDate: data.cardExpDate,
+      paymentToken: data.paymentToken
+    };
+    const event = createCustomEvent(this.win_, `${TAG}.${name}`, eventPayload);
+    this.actions_.trigger(this.element, name, event, ActionTrust.HIGH);
   }
 }
 
