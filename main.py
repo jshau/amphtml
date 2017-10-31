@@ -16,6 +16,9 @@ class StaticHandler(webapp2.RequestHandler):
     self.response.body_file.write( file.read() )
     file.close()
 
+# This returns an empty JS file that the prototype loads to make UberProxy work.
+# It's a weird hack, but its actually suggested by the UberProxy team here:
+# https://g3doc.corp.google.com/company/teams/uberproxy/user-docs/faqs/service-config.md?cl=head#can-i-use-cors
 class EmptyHandler(webapp2.RequestHandler):
   def get(self, **kwargs):
     origin = self.request.headers.get('Origin', '')
