@@ -20,21 +20,6 @@
 .subtitle {
   font-weight: bold;
 }
-.card-row {
-  display: flex;
-  flex-direction: row;
-}
-.card-number {
-  width: 50%;
-}
-.card-exp-date {
-  width: 25%;
-  margin-left: 10px;
-}
-.card-cvn {
-  width: 15%;
-  margin-left: 10px;
-}
 .next-button {
     display: flex;
     flex-direction: row;
@@ -56,16 +41,36 @@
   cursor: pointer;
   padding: 6px 10px 0px 10px;
 }
-.amp-payment-button {
-  border: none;
-  outline: none;
-  width: 188px;
-  height: 44px;
-  background: url(https://lh3.googleusercontent.com/G63J9-qTSP5Q_2PJFJWULbt6VE56alWqnrTe8W7QVwcssACRzxI11q2qo75C94J5qg=w188);
-  margin-top: 16px;
-  margin-left: 12px;
+.payment-section {
+  padding: 16px 0 16px 0;
+  background: white;
 }
-.amp-payment-button:active {
-  /* Make the button darken slightly when pressed */
-  box-shadow: inset 0 0 0 1000px rgba(0,0,0,.2);
+.payment-logo {
+  display: inline-block;
+  margin-left: 16px;
+  text-align: center;
 }
+.payment-logo img {
+  width: 24px;
+}
+.payment-detail {
+  display: inline-block;
+  margin-left: 8px;
+}
+.payment-button {
+  color: #4285f4;
+  cursor: pointer;
+  display: inline-block;
+  float: right;
+  font-size: 14px;
+  margin: 8px 48px 0 0;
+}
+.payment-brand {
+  font-size: 14px;
+  font-weight: 700;
+}
+.payment-number {
+  font-size: 14px;
+  margin-top: 2px;
+}
+

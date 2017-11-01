@@ -15,8 +15,19 @@ const TAG = 'amp-payment';
 const logoUrl =
     'https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_32dp.png';
 
-class AmpPayment extends AMP.BaseElement {
+const createElement = (type, className, children) => {
+  const element = global.document.createElement(type);
+  element.classList.add(className);
+  appendChildren(element, children);
+  return element;
+};
 
+const appendChildren = (element, children) => {
+  children = (!children) ? [] : Array.isArray(children) ? children : [children];
+  children.forEach(child => element.appendChild(child));
+};
+
+class AmpPayment extends AMP.BaseElement {
   /** @param {!AmpElement} element */
   constructor(element) {
     super(element);
@@ -26,6 +37,9 @@ class AmpPayment extends AMP.BaseElement {
 
     /** @const @private {!../../../src/service/action-impl.ActionService} */
     this.actions_ = Services.actionServiceForDoc(element);
+
+    /** @const @private {!../../../src/service/viewer-impl.Viewer} */
+    this.viewer_ = Services.viewerForDoc(element);
   }
 
   /** @override */
@@ -46,7 +60,9 @@ class AmpPayment extends AMP.BaseElement {
 
   /** @override */
   buildCallback() {
-    this.renderButton_();
+    this.viewer_.whenFirstVisible()
+        .then(() => this.viewer_.sendMessageAwaitResponse('loadPayments', {}))
+        .then(this.renderPaymentSection_.bind(this));
   }
 
   /** @override */
@@ -55,36 +71,56 @@ class AmpPayment extends AMP.BaseElement {
   }
 
   /** @private */
-  loadPayment_() {
-    const viewer = Services.viewerForDoc(this.getAmpDoc());
-    viewer.whenFirstVisible()
-        .then(() => viewer.sendMessageAwaitResponse('loadPayments', {}))
+  renderInstrumentSelector_() {
+    this.viewer_
+        .sendMessageAwaitResponse(
+            'renderInstrumentSelector',
+            {currentCardToken: this.cardToken_.value})
         .then(this.completedCallback_.bind(this));
   }
 
-  /** @private */
-  renderButton_() {
-    while (this.element.firstChild) {
-      this.element.removeChild(this.element.firstChild);
-    }
+  /**
+   * Render payment section with prefetched payment data.
+   * {Object} data
+   * @private
+   */
+  renderPaymentSection_(data) {
+    const div = createElement('div', 'payment-section', [
+      createElement(
+          'div', 'payment-logo', createElement('img', 'payment-logo-img')),
+      createElement(
+          'div', 'payment-detail',
+          [
+            createElement('div', 'payment-brand'),
+            createElement('div', 'payment-number'),
+            createElement('input', 'payment-card-token')
+          ]),
+      createElement('div', 'payment-button')
+    ]);
+    div.getElementsByClassName('payment-logo-img')[0].setAttribute(
+        'src', data.paymentLogo);
+    div.getElementsByClassName('payment-brand')[0].innerHTML =
+        'Pay with Google';
+    this.cardNumber_ = div.getElementsByClassName('payment-number')[0];
+    this.cardNumber_.innerHTML = data.defaultCardNumber;
 
-    const button = global.document.createElement('button');
-    button.addEventListener('click', this.loadPayment_.bind(this));
-    button.classList.add('amp-payment-button');
+    this.cardToken_ = div.getElementsByClassName('payment-card-token')[0];
+    this.cardToken_.classList.add('hidden');
+    this.cardToken_.value = data.defaultCardToken;
+    const button = div.getElementsByClassName('payment-button')[0];
+    button.innerHTML = 'CHANGE';
 
-    this.element.appendChild(button);
-  }
+    button.addEventListener('click', this.renderInstrumentSelector_.bind(this));
+
+    this.element.appendChild(div);
+  };
 
   /** @private */
   completedCallback_(data) {
-    const name = 'completed';
-    const eventPayload = {
-      cardNumber: data.cardNumber,
-      cardExpDate: data.cardExpDate,
-      paymentToken: data.paymentToken
-    };
-    const event = createCustomEvent(this.win_, `${TAG}.${name}`, eventPayload);
-    this.actions_.trigger(this.element, name, event, ActionTrust.HIGH);
+    if (data.cardNumber && data.paymentToken) {
+      this.cardNumber_.innerHTML = data.cardNumber;
+      this.cardToken_.value = data.paymentToken;
+    }
   }
 }
 
