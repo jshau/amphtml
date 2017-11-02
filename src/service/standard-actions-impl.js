@@ -68,6 +68,9 @@ export class StandardActions {
     /** @const @private {!./viewport/viewport-impl.Viewport} */
     this.viewport_ = Services.viewportForDoc(ampdoc);
 
+    /** @const @private {!../../../src/service/viewer-impl.Viewer} */
+    this.viewer_ = Services.viewerForDoc(ampdoc);
+
     this.installActions_(this.actions_);
   }
 
@@ -128,6 +131,9 @@ export class StandardActions {
 
       case 'print':
         return this.handleAmpPrint_(invocation);
+
+      case 'orderCompleted':
+        return this.handleAmpOrderCompleted_(invocation);
     }
     throw user().createError('Unknown AMP action ', method);
   }
@@ -211,6 +217,17 @@ export class StandardActions {
     win.print();
     return null;
   }
+
+  /**
+   * @param {!./action-impl.ActionInvocation} invocation
+   * @return {?Promise}
+   * @private
+   */
+  handleAmpOrderCompleted_(invocation) {
+    this.viewer_.sendMessage('orderCompleted', {});
+    return null;
+  }
+
 
   /**
    * Handles the `scrollTo` action where given an element, we smooth scroll to
