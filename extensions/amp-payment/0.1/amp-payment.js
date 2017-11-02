@@ -87,7 +87,8 @@ class AmpPayment extends AMP.BaseElement {
   renderPaymentSection_(data) {
     const div = createElement('div', 'i-amphtml-payment-section', [
       createElement(
-          'div', 'i-amphtml-payment-logo', createElement('img', 'i-amphtml-payment-logo-img')),
+          'div', 'i-amphtml-payment-logo',
+          createElement('img', 'i-amphtml-payment-logo-img')),
       createElement(
           'div', 'i-amphtml-payment-detail',
           [
@@ -100,11 +101,13 @@ class AmpPayment extends AMP.BaseElement {
     div.getElementsByClassName('i-amphtml-payment-logo-img')[0].setAttribute(
         'src', data.paymentLogo);
     div.getElementsByClassName('i-amphtml-payment-brand')[0].innerHTML =
-        'Pay with Google';
-    this.cardNumber_ = div.getElementsByClassName('i-amphtml-payment-number')[0];
+        'Google Pay';
+    this.cardNumber_ =
+        div.getElementsByClassName('i-amphtml-payment-number')[0];
     this.cardNumber_.innerHTML = data.defaultCardNumber;
 
-    this.cardToken_ = div.getElementsByClassName('i-amphtml-payment-card-token')[0];
+    this.cardToken_ =
+        div.getElementsByClassName('i-amphtml-payment-card-token')[0];
     this.cardToken_.classList.add('hidden');
     this.cardToken_.value = data.defaultCardToken;
     const button = div.getElementsByClassName('i-amphtml-payment-button')[0];
