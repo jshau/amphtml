@@ -85,29 +85,29 @@ class AmpPayment extends AMP.BaseElement {
    * @private
    */
   renderPaymentSection_(data) {
-    const div = createElement('div', 'payment-section', [
+    const div = createElement('div', 'i-amphtml-payment-section', [
       createElement(
-          'div', 'payment-logo', createElement('img', 'payment-logo-img')),
+          'div', 'i-amphtml-payment-logo', createElement('img', 'i-amphtml-payment-logo-img')),
       createElement(
-          'div', 'payment-detail',
+          'div', 'i-amphtml-payment-detail',
           [
-            createElement('div', 'payment-brand'),
-            createElement('div', 'payment-number'),
-            createElement('input', 'payment-card-token')
+            createElement('div', 'i-amphtml-payment-brand'),
+            createElement('div', 'i-amphtml-payment-number'),
+            createElement('input', 'i-amphtml-payment-card-token')
           ]),
-      createElement('div', 'payment-button')
+      createElement('div', 'i-amphtml-payment-button')
     ]);
-    div.getElementsByClassName('payment-logo-img')[0].setAttribute(
+    div.getElementsByClassName('i-amphtml-payment-logo-img')[0].setAttribute(
         'src', data.paymentLogo);
-    div.getElementsByClassName('payment-brand')[0].innerHTML =
+    div.getElementsByClassName('i-amphtml-payment-brand')[0].innerHTML =
         'Pay with Google';
-    this.cardNumber_ = div.getElementsByClassName('payment-number')[0];
+    this.cardNumber_ = div.getElementsByClassName('i-amphtml-payment-number')[0];
     this.cardNumber_.innerHTML = data.defaultCardNumber;
 
-    this.cardToken_ = div.getElementsByClassName('payment-card-token')[0];
+    this.cardToken_ = div.getElementsByClassName('i-amphtml-payment-card-token')[0];
     this.cardToken_.classList.add('hidden');
     this.cardToken_.value = data.defaultCardToken;
-    const button = div.getElementsByClassName('payment-button')[0];
+    const button = div.getElementsByClassName('i-amphtml-payment-button')[0];
     button.innerHTML = 'CHANGE';
 
     button.addEventListener('click', this.renderInstrumentSelector_.bind(this));

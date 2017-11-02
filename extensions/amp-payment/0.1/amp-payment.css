@@ -1,63 +1,20 @@
-.form-row {
-    margin: 16px 16px 0;
-  }
-.form-row label {
-  display: block;
-  padding: 0 4px;
-  color: #333;
-}
-.form-row input {
-  display: block;
-  width: calc(100% - 16px);
-  border: 0;
-  border-radius: 3px;
-  padding: 8px;
-}
-.form-row .tip {
-  padding: 4px;
-  color: #777;
-}
-.subtitle {
-  font-weight: bold;
-}
-.next-button {
-    display: flex;
-    flex-direction: row;
-    margin: 10px 0;
-    width: 64%;
-    margin-left: auto;
-  }
-.next-button>a {
-  border-radius: 3px;
-  background: #ff7300;
-  text-decoration: none;
-  color: white;
-  height: 30px;
-  margin-right: 10px;
-  line-height: 26px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 6px 10px 0px 10px;
-}
-.payment-section {
+.i-amphtml-payment-section {
   padding: 16px 0 16px 0;
   background: white;
 }
-.payment-logo {
+.i-amphtml-payment-logo {
   display: inline-block;
   margin-left: 16px;
   text-align: center;
 }
-.payment-logo img {
+.i-amphtml-payment-logo img {
   width: 24px;
 }
-.payment-detail {
+.i-amphtml-payment-detail {
   display: inline-block;
   margin-left: 8px;
 }
-.payment-button {
+.i-amphtml-payment-button {
   color: #4285f4;
   cursor: pointer;
   display: inline-block;
@@ -65,11 +22,11 @@
   font-size: 14px;
   margin: 8px 48px 0 0;
 }
-.payment-brand {
+.i-amphtml-payment-brand {
   font-size: 14px;
   font-weight: 700;
 }
-.payment-number {
+.i-amphtml-payment-number {
   font-size: 14px;
   margin-top: 2px;
 }
