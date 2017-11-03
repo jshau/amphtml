@@ -20,7 +20,10 @@
   display: inline-block;
   float: right;
   font-size: 14px;
-  margin: 8px 48px 0 0;
+  margin: 8px 36px 0 0;
+}
+.i-amphtml-payment-link {
+  padding: 12px;
 }
 .i-amphtml-payment-brand {
   font-size: 14px;
