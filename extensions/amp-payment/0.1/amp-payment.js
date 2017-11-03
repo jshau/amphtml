@@ -110,8 +110,11 @@ class AmpPayment extends AMP.BaseElement {
         div.getElementsByClassName('i-amphtml-payment-card-token')[0];
     this.cardToken_.classList.add('hidden');
     this.cardToken_.value = data.defaultCardToken;
-    const button = div.getElementsByClassName('i-amphtml-payment-button')[0];
+    const buttonDiv = div.getElementsByClassName('i-amphtml-payment-button')[0];
+    const button = createElement('a', 'i-amphtml-payment-link');
+    button.setAttribute('tabindex', '1');
     button.innerHTML = 'CHANGE';
+    buttonDiv.appendChild(button);
 
     button.addEventListener('click', this.renderInstrumentSelector_.bind(this));
 
