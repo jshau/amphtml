@@ -12,9 +12,6 @@ import {toWin} from '../../../src/types';
 /** @const {string} */
 const TAG = 'amp-payment';
 
-const logoUrl =
-    'https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_32dp.png';
-
 const createElement = (type, className, children) => {
   const element = global.document.createElement(type);
   element.classList.add(className);
