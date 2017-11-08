@@ -18,7 +18,11 @@
 import {listen} from '../../../src/event-helper';
 import {dict} from '../../../src/utils/object';
 import {iterateCursor} from '../../../src/dom';
-
+import {
+  getFieldAsObject,
+  setFieldIdForElement,
+  elementOrNullForFieldId,
+} from '../../../src/field';
 
 /**
  * The list of touch event properites to copy.
@@ -39,7 +43,12 @@ const TARGET_ELEMENT_ATTRIBUTES = [
 /**
  * @const {string} Request name to set a field's value.
  */
-const SET_FIELD_VALUE = 'setFieldValue';
+const SET_FIELD_VALUES = 'setFieldValues';
+
+/**
+ * @const {string} Request name to set focus on an element.
+ */
+const SET_FOCUS = 'setFocus';
 
 
 /**
@@ -63,7 +72,8 @@ export class FocusHandler {
 
     this.fields = dict();
 
-    messaging.registerHandler(SET_FIELD_VALUE, this.setFieldValueHandler_.bind(this));
+    messaging.registerHandler(SET_FIELD_VALUES, this.setFieldValuesHandler_.bind(this));
+    messaging.registerHandler(SET_FOCUS, this.setFocusHandler_.bind(this));
 
     this.listenForFocusEvents_();
   }
@@ -78,124 +88,84 @@ export class FocusHandler {
     this.fields = dict();
     iterateCursor(doc.querySelectorAll('form'), (form) => {
       let id = form.getAttribute('id');
-      this.fields[id] = dict();
       iterateCursor(form.elements, (element) => {
-        let name = element.getAttribute('name');
-        this.fields[id][name] = this.fields[id][name] || [];
-        const index = this.fields[id][name].length;
-        const targetElKey = [id, name, index].join('.');
-        this.fields[id][name].push({
-          element: element,
-          unlisten: listen(element, 'focus', this.handleEvent_.bind(this, targetElKey), options)
-        });
+        setFieldIdForElement(element);
+        this.unlistenHandlers_.push(listen(element, 'focus', this.handleFocusEvent_.bind(this), options));
       });
     });
 
   }
 
   unlisten_() {
-    // this.unlistenHandlers_.forEach(unlisten => unlisten());
-    // this.unlistenHandlers_.length = 0;
-  }
-
-  /**
-   * @param {!string} targetElKey
-   * @param {!Event} e
-   * @private
-   */
-  handleEvent_(targetElKey, e) {
-    switch (e.type) {
-      case 'focus':
-        this.forwardEvent_(targetElKey, e);
-        break;
-      default:
-        return;
-    }
+    this.unlistenHandlers_.forEach(unlisten => unlisten());
+    this.unlistenHandlers_.length = 0;
   }
 
   /**
    * @param {!Event} e
    * @private
    */
-  forwardEvent_(targetElKey, e) {
-    if (e && e.type) {
-      const msg = this.copyEvent_(targetElKey, e);
-      this.messaging_.sendRequest(e.type, msg, false);
+  handleFocusEvent_(e) {
+    const focusedField = e.target;
+    const form = focusedField.form;
+    const fields = [];
+    for (let i = 0; i < form.elements.length; i++) {
+      fields.push(getFieldAsObject(form.elements[i]));
     }
-  }
-
-
-  /**
-   * Makes a partial copy of the event.
-   * @param {!Event} e The event object to be copied.
-   * @return {!JsonObject}
-   * @private
-   */
-  copyEvent_(targetElKey, e) {
-    const copiedEvent = this.copyProperties_(e, EVENT_PROPERTIES);
-    if (e.target) {
-      copiedEvent['target'] = this.copyTarget_(targetElKey, e.target);
-    }
-    return copiedEvent;
-  }
-
-
-  /**
-   * Copies the target element.
-   * @param {!Object} target
-   * @return {!Object}
-   * @private
-   */
-  copyTarget_(targetElKey, target) {
-    const attributesObject = dict();
-    for (let i = 0; i < target.attributes.length; i++) {
-      const a = target.attributes[i];
-      attributesObject[a.name] = a.value;
-    }
-    return {
-      tagName: target.tagName,
-      attributes: attributesObject,
-      formFieldKey: targetElKey
-    };
-  }
-
-   /**
-   * Copies specified properties of o to a new object.
-   * @param {!Object} o The source object.
-   * @param {!Array<string>} properties The properties to copy.
-   * @return {!JsonObject} The copy of o.
-   * @private
-   */
-  copyProperties_(o, properties) {
-    const copy = dict();
-    for (let i = 0; i < properties.length; i++) {
-      const p = properties[i];
-      if (o[p] !== undefined) {
-        copy[p] = o[p];
+    this.messaging_.sendRequest('focus', {
+      field: getFieldAsObject(focusedField),
+      form: {
+        id: form.id,
+        fields: fields
       }
-    }
-    return copy;
+    }, false);
   }
 
-    /**
-   * Handles scrollLock requests from the viewer to change the scrollLock state.
+  /**
+   * Handles setFieldValues requests from the viewer to set the value of certain fields.
    * @param {string} type Unused.
-   * @param {*} payload True to disable event forwarding / lock scrolling.
+   * @param {*} payload Object containing the field ampIds and values to set.
    * @param {boolean} awaitResponse
    * @return {!Promise<?>|undefined}
    * @private
    */
-  setFieldValueHandler_(type, payload, awaitResponse) {
-    const keyParts = payload.formFieldKey.split('.');
-    const formId = keyParts[0];
-    const fieldName = keyParts[1];
-    const fieldIndex = parseInt(keyParts[2], 10);
-
-    if (!this.fields[formId] || !this.fields[formId][fieldName] || !this.fields[formId][fieldName][fieldIndex]) {
-      return awaitResponse ? Promise.reject('Could not find form field with formFieldKey = ' + payload.formFieldKey) : undefined;
+  setFieldValuesHandler_(type, payload, awaitResponse) {
+    const missingAmpIds = [];
+    for (let i = 0; i < payload.fields.length; i++) {
+      const ampId = payload.fields[i].ampId;
+      const element = elementOrNullForFieldId(ampId);
+      if (element) {
+        element.value = payload.fields[i].value;
+      } else {
+        missingAmpIds.push(ampId);
+      }
     }
-    const formFieldEl = this.fields[formId][fieldName][fieldIndex].element;
-    formFieldEl.value = payload.value;
+
+    if (!awaitResponse) {
+      return undefined;
+    } else if (missingAmpIds.length) {
+      return Promise.reject('Could not find form field(s) with ampId = ' + missingAmpIds.join(', '));
+    } else {
+      return Promise.resolve({});
+    }
+  }
+
+  /**
+   * Handles setFocus requests from the viewer to set the focus on a given field.
+   * @param {string} type Unused.
+   * @param {*} payload Object containing the ampId of the field to set focus on.
+   * @param {boolean} awaitResponse
+   * @return {!Promise<?>|undefined}
+   * @private
+   */
+  setFocusHandler_(type, payload, awaitResponse) {
+    const missingAmpIds = [];
+    const element = elementOrNullForFieldId(payload.ampId);
+
+    if (!element) {
+      return awaitResponse ? Promise.reject('Could not find form field with ampId = ' + payload.ampId) : undefined;
+    }
+    element.focus();
     return awaitResponse ? Promise.resolve({}) : undefined;
   }
 
