@@ -123,6 +123,9 @@ class AmpPayment extends AMP.BaseElement {
     if (data.cardNumber && data.paymentToken) {
       this.cardNumber_.innerHTML = data.cardNumber;
       this.cardToken_.value = data.paymentToken;
+      const name = 'completed';
+      const event = createCustomEvent(this.win_, `${TAG}.${name}`, data);
+      this.actions_.trigger(this.element, name, event, ActionTrust.HIGH);
     }
   }
 }

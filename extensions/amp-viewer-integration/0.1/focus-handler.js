@@ -136,6 +136,7 @@ export class FocusHandler {
       const element = elementOrNullForFieldId(ampId);
       if (element) {
         element.value = payload.fields[i].value;
+        element.dispatchEvent(new Event('change', {bubbles: true}));
       } else {
         missingAmpIds.push(ampId);
       }
