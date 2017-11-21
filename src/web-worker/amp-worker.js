@@ -86,9 +86,10 @@ class AmpWorker {
     // Use RTV to make sure we fetch prod/canary/experiment correctly.
     const useLocal = getMode().localDev || getMode().test;
     const useRtvVersion = !useLocal;
-    // This is hacky, but we shouldn't need to modify this file at all
-    // so it shouldn't be a problem.
-    const url = 'https://aog-amp-actions-amphtml.googleplex.com/dist/ww.max.js';
+    // This is hacky but its the only good way I can come up with to ensure that
+    // we fetch the web worker with the right URL.
+    const ampJsUrl = document.querySelector('script[src$="/amp.js"]').src;
+    const url = ampJsUrl.replace('/amp.js', '/ww.max.js');
     dev().fine(TAG, 'Fetching web worker from', url);
 
     /** @private {Worker} */
