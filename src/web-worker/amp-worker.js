@@ -84,12 +84,16 @@ class AmpWorker {
       loc = win.testLocation;
     }
     // Use RTV to make sure we fetch prod/canary/experiment correctly.
-    const useLocal = getMode().localDev || getMode().test;
-    const useRtvVersion = !useLocal;
-    // This is hacky but its the only good way I can come up with to ensure that
-    // we fetch the web worker with the right URL.
-    const ampJsUrl = document.querySelector('script[src$="/amp.js"]').src;
-    const url = ampJsUrl.replace('/amp.js', '/ww.max.js');
+    const useLocal = getMode().test;
+    let url;
+    if (useLocal) {
+      url = calculateEntryPointScriptUrl(loc, 'ww', true, false);
+    } else {
+      // This is hacky but its the only good way I can come up with to ensure that
+      // we fetch the web worker with the right URL.
+      const ampJsUrl = document.querySelector('script[src$="/amp.js"]').src;
+      url = ampJsUrl.replace('/amp.js', '/ww.max.js');
+    }
     dev().fine(TAG, 'Fetching web worker from', url);
 
     /** @private {Worker} */

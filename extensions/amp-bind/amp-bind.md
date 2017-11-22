@@ -343,6 +343,28 @@ sort([2, 1, 3])</pre>
 <sup>2</sup>Single-parameter arrow functions can't have parentheses, e.g. use `x => x + 1` instead of `(x) => x + 1`.<br>
 <sup>3</sup>Static functions are not namespaced, e.g. use `abs(-1)` instead of `Math.abs(-1)`.
 
+#### Defining macros with `amp-macro`
+
+`amp-bind` expression fragments can be reused by defining an `amp-macro`. The `amp-macro` element allows you to define an expression that
+references the current state as well as zero or more arguments. Then, this `amp-macro` can be called by its name from anywhere in your doc.
+
+TODO(williamsjosh): use better example here
+
+```html
+<amp-macro name="sum" arguments="arr" expression="arr.reduce((x, y) => x + y)" />
+
+<amp-macro name="totalTickets" expression="sum(values(userState.cart.ticketCounts))" />
+
+<div [text]="totalTickets() + ' Total Tickets'">
+  3 Total Tickets
+</div>
+```
+
+`amp-macro`s can also call other `amp-macro`s but only if the callee is defined before the caller in the document. `amp-macro`s cannot call
+themselves recursively.
+
+
+
 ### Bindings
 
 A **binding** is a special attribute of the form `[property]` that links an element's property to an [expression](#expressions).
