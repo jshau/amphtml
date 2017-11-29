@@ -20,3 +20,5 @@ build-system/runner/TESTS-TestSuites.xml
 test/coverage
 package-lock.json
 *.pyc
+*.swp
+*.swo

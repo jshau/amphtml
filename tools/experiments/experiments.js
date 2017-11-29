@@ -185,7 +185,7 @@ const EXPERIMENTS = [
   },
   {
     id: 'amp-animation',
-    name: 'High-performing keyframe animations in AMP.',
+    name: 'High-performing keyframe animations in AMP (launched).',
     spec: 'https://github.com/ampproject/amphtml/blob/master/extensions/' +
         'amp-animation/amp-animation.md',
     cleanupIssue: 'https://github.com/ampproject/amphtml/issues/5888',
@@ -277,10 +277,16 @@ const EXPERIMENTS = [
     cleanupIssue: 'https://github.com/ampproject/amphtml/issues/11475',
   },
   {
-    id: 'amp-story-desktop',
-    name: 'A responsive desktop experience for the amp-story component',
+    id: 'disable-amp-story-desktop',
+    name: 'Disables responsive desktop experience for the amp-story component',
     spec: 'https://github.com/ampproject/amphtml/issues/11714',
     cleanupIssue: 'https://github.com/ampproject/amphtml/issues/11715',
+  },
+  {
+    id: 'amp-story-auto-fullscreen',
+    name: 'Enables full-screen mode on first page transition',
+    spec: 'https://github.com/ampproject/amphtml/issues/11974',
+    cleanupIssue: 'https://github.com/ampproject/amphtml/issues/11975',
   },
 ];
 

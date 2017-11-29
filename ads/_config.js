@@ -58,6 +58,11 @@ export const adConfig = {
     clientIdScope: '_PING_',
   },
 
+  '24smi': {
+    prefetch: 'https://jsn.24smi.net/smi.js',
+    preconnect: 'https://data.24smi.net',
+  },
+
   a8: {
     prefetch: 'https://statics.a8.net/amp/ad.js',
     renderStartImplemented: true,
@@ -247,7 +252,12 @@ export const adConfig = {
     prefetch: 'https://static.clmbtech.com/ad/commons/js/colombia-amp.js',
   },
 
+  connatix: {
+    renderStartImplemented: true,
+  },
+
   contentad: {},
+
 
   criteo: {
     prefetch: 'https://static.criteo.net/js/ld/publishertag.js',
@@ -423,6 +433,11 @@ export const adConfig = {
 
   ligatus: {
     prefetch: 'https://ssl.ligatus.com/render/ligrend.js',
+    renderStartImplemented: true,
+  },
+
+  lockerdome: {
+    prefetch: 'https://cdn2.lockerdomecdn.com/_js/amp.js',
     renderStartImplemented: true,
   },
 
