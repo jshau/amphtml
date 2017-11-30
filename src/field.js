@@ -61,5 +61,4 @@ export function getFieldAsObject(element) {
     value: element.value,
     autocomplete: element.autocomplete,
   });
-  return data;
 }
