@@ -68,7 +68,7 @@ export class StandardActions {
     /** @const @private {!./viewport/viewport-impl.Viewport} */
     this.viewport_ = Services.viewportForDoc(ampdoc);
 
-    /** @const @private {!../../../src/service/viewer-impl.Viewer} */
+    /** @const @private {!./viewer-impl.Viewer} */
     this.viewer_ = Services.viewerForDoc(ampdoc);
 
     this.installActions_(this.actions_);
