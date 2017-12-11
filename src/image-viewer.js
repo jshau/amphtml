@@ -119,6 +119,10 @@ export class ImageViewer {
     this.maxX_ = 0;
     /** @private {number} */
     this.maxY_ = 0;
+    /** @private {?./gesture.Gestures} */
+    this.gestures_ = null;
+    /** @private {?function()} */
+    this.unlistenOnSwipePan_ = null;
 
     /** @private {?./motion.Motion} */
     this.motion_ = null;
@@ -237,13 +241,21 @@ export class ImageViewer {
       // It will be updated later.
       this.image_.setAttribute('src', sourceImage.src);
     }
+
+    st.setStyles(this.image_, {
+      top: st.px(0),
+      left: st.px(0),
+      width: st.px(0),
+      height: st.px(0),
+    });
   }
 
   /**
    * Measures the image viewer and image sizes and positioning.
+   * @return {!Promise}
    */
   measure() {
-    this.lightbox_.getVsync().measure(() => {
+    return this.lightbox_.getVsync().measurePromise(() => {
       this.viewerBox_ = layoutRectFromDomRect(this.viewer_
         ./*OK*/getBoundingClientRect());
 
@@ -280,6 +292,7 @@ export class ImageViewer {
       this.updatePanZoomBounds_(this.scale_);
       this.updatePanZoom_();
 
+    }).then(() => {
       this.updateSrc_();
     });
   }
@@ -310,27 +323,18 @@ export class ImageViewer {
 
   /** @private */
   setupGestures_() {
-    const gestures = Gestures.get(this.image_,
-        /* opt_shouldNotPreventDefault */ true);
-
-    // Movable.
-    gestures.onGesture(SwipeXYRecognizer, e => {
-      if (this.isScaled()) {
-        event.preventDefault();
-        this.onMove_(e.data.deltaX, e.data.deltaY, false);
-        if (e.data.last) {
-          this.onMoveRelease_(e.data.velocityX, e.data.velocityY);
-        }
-      }
-    });
-    gestures.onPointerDown(() => {
+    const gesturesWithoutPreventDefault = Gestures.get(this.image_,
+        /* opt_shouldNotPreventDefault */true);
+    gesturesWithoutPreventDefault.onPointerDown(() => {
       if (this.motion_) {
         this.motion_.halt();
       }
     });
 
+    this.gestures_ = Gestures.get(this.viewer_);
+
     // Zoomable.
-    gestures.onGesture(DoubletapRecognizer, e => {
+    this.gestures_.onGesture(DoubletapRecognizer, e => {
       let newScale;
       if (this.scale_ == 1) {
         newScale = this.maxScale_;
@@ -343,8 +347,8 @@ export class ImageViewer {
         return this.onZoomRelease_();
       });
     });
-    gestures.onGesture(TapzoomRecognizer, e => {
-      event.preventDefault();
+
+    this.gestures_.onGesture(TapzoomRecognizer, e => {
       this.onTapZoom_(e.data.centerClientX, e.data.centerClientY,
           e.data.deltaX, e.data.deltaY);
       if (e.data.last) {
@@ -352,15 +356,41 @@ export class ImageViewer {
             e.data.deltaX, e.data.deltaY, e.data.velocityY, e.data.velocityY);
       }
     });
-    gestures.onGesture(PinchRecognizer, e => {
-      // To disable iOS 10 Safari default pinch zoom
-      event.preventDefault();
+
+    this.gestures_.onGesture(PinchRecognizer, e => {
       this.onPinchZoom_(e.data.centerClientX, e.data.centerClientY,
           e.data.deltaX, e.data.deltaY, e.data.dir);
       if (e.data.last) {
         this.onZoomRelease_();
       }
     });
+  }
+
+  /**
+   * Registers a Swipe gesture to handle panning when the image is zoomed.
+   * @private
+   */
+  registerPanningGesture_() {
+    // Movable.
+    this.unlistenOnSwipePan_ = this.gestures_
+      .onGesture(SwipeXYRecognizer, e => {
+        this.onMove_(e.data.deltaX, e.data.deltaY, false);
+        if (e.data.last) {
+          this.onMoveRelease_(e.data.velocityX, e.data.velocityY);
+        }
+      });
+  }
+
+  /**
+   * Deregisters the Swipe gesture for panning when the image is zoomed out.
+   * @private
+   */
+  unregisterPanningGesture_() {
+    if (this.unlistenOnSwipePan_) {
+      this.unlistenOnSwipePan_();
+      this.unlistenOnSwipePan_ = null;
+      this.gestures_.removeGesture(SwipeXYRecognizer);
+    }
   }
 
   /**
@@ -614,6 +644,12 @@ export class ImageViewer {
     return this.release_().then(() => {
       if (relayout) {
         this.updateSrc_();
+      }
+      // After the scale is updated, also register or unregister panning
+      if (this.scale_ <= 1) {
+        this.unregisterPanningGesture_();
+      } else {
+        this.registerPanningGesture_();
       }
     });
   }

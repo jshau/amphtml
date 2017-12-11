@@ -1,5 +1,5 @@
 <!---
-Copyright 2015 The AMP HTML Authors. All Rights Reserved.
+Copyright 2017 The AMP HTML Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,27 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# AdSense
+# Viralize
 
 ## Example
 
 ```html
-<amp-ad width=300 height=250
-      type="adsense"
-      data-ad-client="ca-pub-2005682797531342"
-      data-ad-slot="7046626912">
- </amp-ad>
+<amp-ad width="300" height="169"
+      type="viralize"
+      layout="responsive"
+      data-zid="AACX6WjIMkl-yoGV">
+</amp-ad>
 ```
 
 ## Configuration
 
-For semantics of configuration, please see [ad network documentation](https://support.google.com/adsense/answer/7183212?hl=en).  For AdSense for Search and AdSense for Shopping, please see the [CSA AMP ad type](https://github.com/ampproject/amphtml/blob/master/ads/google/csa.md).
-
 Supported parameters:
 
-- data-ad-client
-- data-ad-slot
-- data-ad-host
-- data-adtest
-- data-tag-origin
-- data-language
+- data-zid: required. Id of the unit.
+- data-extra: optional. JSON object representing any other query parameter that could be passed to the unit.
+
+For further configuration details, please contact [Viralize](https://viralize.com/contact-us/).

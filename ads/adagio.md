@@ -1,5 +1,5 @@
 <!---
-Copyright 2015 The AMP HTML Authors. All Rights Reserved.
+Copyright 2017 The AMP HTML Authors. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,27 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-# AdSense
+# Ad.Agio - Neodata Group
 
 ## Example
 
 ```html
-<amp-ad width=300 height=250
-      type="adsense"
-      data-ad-client="ca-pub-2005682797531342"
-      data-ad-slot="7046626912">
- </amp-ad>
+<amp-ad width=320 height=250
+    type="adagio"
+    data-sid="39"
+    data-loc="amp_ampw_amps_ampp_300x250"
+    data-keywords=""
+    data-uservars="">
+</amp-ad>
 ```
 
 ## Configuration
 
-For semantics of configuration, please see [ad network documentation](https://support.google.com/adsense/answer/7183212?hl=en).  For AdSense for Search and AdSense for Shopping, please see the [CSA AMP ad type](https://github.com/ampproject/amphtml/blob/master/ads/google/csa.md).
+For semantics of configuration, please see ad network documentation.
 
 Supported parameters:
 
-- data-ad-client
-- data-ad-slot
-- data-ad-host
-- data-adtest
-- data-tag-origin
-- data-language
+- data-sid
+- data-loc
+- data-keywords
+- data-uservars
+
