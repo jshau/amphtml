@@ -33,7 +33,9 @@ import {map} from '../../../src/utils/object';
 import {parseJson, recursiveEquals} from '../../../src/json';
 import {reportError} from '../../../src/error';
 import {rewriteAttributeValue} from '../../../src/sanitizer';
-import {waitForBodyPromise} from '../../../src/dom';
+import {
+  iterateCursor, scopedQuerySelectorAll, waitForBodyPromise,
+} from '../../../src/dom';
 
 const TAG = 'amp-bind';
 
@@ -148,9 +150,9 @@ export class Bind {
     this.viewer_.onMessage('setState', this.setStateFromViewer_.bind(this));
 
     const bodyPromise = (opt_win)
-        ? waitForBodyPromise(opt_win.document)
-            .then(() => dev().assertElement(opt_win.document.body))
-        : ampdoc.whenBodyAvailable();
+      ? waitForBodyPromise(opt_win.document)
+          .then(() => dev().assertElement(opt_win.document.body))
+      : ampdoc.whenBodyAvailable();
 
     /**
      * Resolved when the service finishes scanning the document for bindings.
@@ -282,7 +284,7 @@ export class Bind {
           // Don't reevaluate/apply if there are no bindings.
           if (numberOfBindingsAdded > 0) {
             return this.evaluate_().then(results =>
-                this.applyElements_(results, elements));
+              this.applyElements_(results, elements));
           }
         });
     return this.timer_.timeoutPromise(timeout, rescan,
@@ -296,10 +298,11 @@ export class Bind {
    * @private
    */
   initialize_(rootNode) {
-    dev().fine(TAG, 'Scanning DOM for bindings...');
-    let promise = this.addMacros_().then(() => {
-      return this.addBindingsForNodes_([rootNode]);
-    }).then(() => {
+    dev().fine(TAG, 'Scanning DOM for bindings and macros...');
+    let promise = Promise.all([
+      this.addMacros_(),
+      this.addBindingsForNodes_([rootNode])]
+    ).then(() => {
       // Listen for DOM updates (e.g. template render) to rescan for bindings.
       rootNode.addEventListener(AmpEvents.DOM_UPDATE, this.boundOnDomUpdate_);
     });
@@ -343,7 +346,8 @@ export class Bind {
   }
 
   /**
-   * Scans the document for <amp-macro> elements, and adds them to the bind-evaluator.
+   * Scans the document for <amp-bind-macro> elements, and adds them to the
+   * bind-evaluator.
    *
    * Returns a promise that resolves after macros have been added.
    *
@@ -351,19 +355,24 @@ export class Bind {
    * @private
    */
   addMacros_() {
-    const elements = Array.from(this.localWin_.document.getElementsByTagName('AMP-MACRO'));
-    const ampMacroDefs = elements.map(element => {
-      return {
-        name: element.getAttribute('name'),
-        argumentNames: (element.getAttribute('arguments') || '').split(',').map(s => s.trim()),
-        expressionString: element.getAttribute('expression')
-      };
+    const elements =
+        scopedQuerySelectorAll(this.ampdoc.getBody(), 'AMP-BIND-MACRO');
+    const macros =
+        /** @type {!Array<!./amp-bind-macro.AmpBindMacroDef>} */ ([]);
+    iterateCursor(elements, element => {
+      const argumentNames = (element.getAttribute('arguments') || '')
+          .split(',')
+          .map(s => s.trim());
+      macros.push({
+        id: element.getAttribute('id'),
+        argumentNames,
+        expressionString: element.getAttribute('expression'),
+      });
     });
-    if (ampMacroDefs.length == 0) {
+    if (macros.length == 0) {
       return Promise.resolve(0);
     } else {
-      return this.ww_('bind.addMacros', [ampMacroDefs])
-        .then(() => ampMacroDefs.length);
+      return this.ww_('bind.addMacros', [macros]).then(() => macros.length);
     }
   }
 
@@ -382,8 +391,8 @@ export class Bind {
     const scanPromises = nodes.map(node => {
       // Limit number of total bindings (unless in local manual testing).
       const limit = (getMode().localDev && !getMode().test)
-          ? Number.POSITIVE_INFINITY
-          : this.maxNumberOfBindings_ - this.numberOfBindings();
+        ? Number.POSITIVE_INFINITY
+        : this.maxNumberOfBindings_ - this.numberOfBindings();
 
       return this.scanNode_(node, limit).then(results => {
         const {

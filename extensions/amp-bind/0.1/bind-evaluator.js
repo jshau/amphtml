@@ -46,8 +46,8 @@ export class BindEvaluator {
     this.bindings_ = [];
 
     /**
-     * The map of name to macro for all macros on the page
-     * @private @const {!Object<string, !./amp-macro.AmpMacroDef>}
+     * Maps `id` to parsed BindMacro objects for all <amp-bind-macro> on page.
+     * @private @const {!Object<string, !./bind-macro.BindMacro>}
      */
     this.macros_ = Object.create(null);
 
@@ -91,23 +91,28 @@ export class BindEvaluator {
     });
 
     filterSplice(this.bindings_, binding =>
-        !expressionsToRemove[binding.expressionString]);
+      !expressionsToRemove[binding.expressionString]);
   }
 
   /**
-   * Parses and stores the given macros and returns map
-   * of macro name to parse errors.
-   * @param {!./amp-macro.AmpMacroDef} ampMacroDefs
-   * @return {?EvaluatorErrorDef},
+   * Parses and stores the given macros and returns map of macro `id` to
+   * parse errors.
+   * @param {!Array<./amp-bind-macro.AmpBindMacroDef>} macros
+   * @return {!Object<string, EvaluatorErrorDef>}
    */
-  addMacros(ampMacroDefs) {
+  addMacros(macros) {
     const errors = Object.create(null);
-    // Create BindMacro objects from AmpMacroDefs.
-    ampMacroDefs.forEach(ampMacroDef => {
+    // Create BindMacro objects from AmpBindMacroDef.
+    macros.forEach(macro => {
+      // Only allow a macro to reference macros defined before it to prevent
+      // cycles and recursion.
+      // TODO(willchou): Would be better if cycle/recursion errors are thrown
+      // at creation instead of evaluation.
+      const referableMacros = Object.assign(Object.create(null), this.macros_);
       try {
-        this.macros_[ampMacroDef.name] = new BindMacro(ampMacroDef, this.macros_);
+        this.macros_[macro.id] = new BindMacro(macro, referableMacros);
       } catch (e) {
-        errors[ampMacroDef.name] = {message: e.message, stack: e.stack};
+        errors[macro.id] = {message: e.message, stack: e.stack};
       }
     });
     return errors;
@@ -232,7 +237,7 @@ export class BindEvaluator {
     let result = null;
     let error = null;
     try {
-      result = expression.evaluate(scope, this.macros_);
+      result = expression.evaluate(scope);
     } catch (e) {
       error = {message: e.message, stack: e.stack};
     }

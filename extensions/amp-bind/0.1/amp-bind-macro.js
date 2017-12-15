@@ -14,26 +14,22 @@
  * limitations under the License.
  */
 
-import {Services} from '../../../src/services';
-import {map} from '../../../src/utils/object';
-import {fetchBatchedJsonFor} from '../../../src/batched-json';
-import {isJsonScriptTag} from '../../../src/dom';
-import {toggle} from '../../../src/style';
-import {tryParseJson} from '../../../src/json';
-import {dev, user} from '../../../src/log';
-import {BindExpression} from './bind-expression';
-
-
 /**
+ * Data representation of an <amp-bind-macro> that can cross the web worker
+ * boundary (structured cloneable).
  * @typedef {{
- *   name: !string,
- *   argumentNames: !string[],
- *   expressionString: !string
+ *   id: string,
+ *   argumentNames: Array<string>,
+ *   expressionString: string
  * }}
  */
-export let AmpMacroDef;
+export let AmpBindMacroDef;
 
-export class AmpMacro extends AMP.BaseElement {
+/**
+ * The <amp-bind-macro> element is used to define an expression macro that can
+ * be called from other amp-bind expressions within the document.
+ */
+export class AmpBindMacro extends AMP.BaseElement {
   /** @override */
   getPriority() {
     // Loads after other content.
@@ -62,7 +58,7 @@ export class AmpMacro extends AMP.BaseElement {
    * @private
    */
   getName_() {
-    return '<amp-macro> ' +
-        (this.element.getAttribute('name') || '<unknown id>');
+    return '<amp-bind-macro> ' +
+        (this.element.getAttribute('id') || '<unknown id>');
   }
 }

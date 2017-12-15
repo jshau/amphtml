@@ -183,6 +183,7 @@ function generateFunctionWhitelist() {
 export class BindExpression {
   /**
    * @param {string} expressionString
+   * @param {!Object<string, !./bind-macro.BindMacro>} macros
    * @param {number=} opt_maxAstSize
    * @throws {Error} On malformed expressions.
    */
@@ -194,26 +195,27 @@ export class BindExpression {
     /** @const {string} */
     this.expressionString = expressionString;
 
-    /** @const {!Object<string, !./bind-macro.BindMacro} */
-    this.macros = macros || {};
+    /** @private @const {!Object<string, !./bind-macro.BindMacro>} */
+    this.macros_ = macros;
 
     /** @const @private {!./bind-expr-defines.AstNode} */
     this.ast_ = parser.parse(this.expressionString);
 
-    // Check if this expression string is too large (for performance).
+    /** @const {number} */
     this.expressionSize = this.numberOfNodesInAst_(this.ast_);
+
+    // Check if this expression string is too large (for performance).
     const maxSize = opt_maxAstSize || DEFAULT_MAX_AST_SIZE;
     const skipConstraint = getMode().localDev && !getMode().test;
     if (this.expressionSize > maxSize && !skipConstraint) {
-      throw new Error(`Expression size (${this.expressionSize}) exceeds max (${maxSize}). ` +
-          'Please reduce number of operands.');
+      throw new Error(`Expression size (${this.expressionSize}) exceeds max ` +
+          `(${maxSize}). Please reduce number of operands.`);
     }
   }
 
   /**
    * Evaluates the expression given a scope.
    * @param {!Object} scope
-   * @param {!Object<string, !./bind-macro.BindMacro>} macros
    * @throws {Error} On illegal function invocation.
    * @return {BindExpressionResultDef}
    */
@@ -227,22 +229,11 @@ export class BindExpression {
    * @private
    */
   numberOfNodesInAst_(ast) {
-    // Include the node count of any nested macros in the expression
-    if (ast.type === AstNodeType.INVOCATION && !ast.args[0] && this.macros[String(ast.value)]) {
-      const macro = this.macros[String(ast.value)];
+    // Include the node count of any nested macros in the expression.
+    if (this.isMacroInvocationNode_(ast)) {
+      const macro = this.macros_[String(ast.value)];
       let nodes = macro.getExpressionSize();
-      // Include the arguments in the node count, but don't include the ARGS node and ARRAY node
-      let children = ast.args;
-      if (ast.args.length === 2 && ast.args[1].type === AstNodeType.ARGS) {
-        const argsNode = ast.args[1];
-        if (argsNode.args.length === 0) {
-          children = [];
-        } else if (argsNode.args.length === 1 && argsNode.args[0].type === AstNodeType.ARRAY) {
-          const arrayNode = argsNode.args[0];
-          children = arrayNode.args;
-        }
-      }
-      children.forEach(arg => {
+      this.getInvocationArgNodes_(ast).forEach(arg => {
         if (arg) {
           nodes += this.numberOfNodesInAst_(arg) - 1;
         }
@@ -262,10 +253,45 @@ export class BindExpression {
   }
 
   /**
+   * @param {!./bind-expr-defines.AstNode} ast
+   * @return {boolean}
+   * @private
+   */
+  isMacroInvocationNode_(ast) {
+    const isInvocationWithNoCaller =
+        (ast.type === AstNodeType.INVOCATION && !ast.args[0]);
+    if (isInvocationWithNoCaller) {
+      const macroExistsWithValue = this.macros_[String(ast.value)] != null;
+      return macroExistsWithValue;
+    }
+    return false;
+  }
+
+  /**
+   * Gets the array of nodes for the arguments of the provided INVOCATION
+   * node, without the wrapping ARGS node and ARRAY node.
+   * @param {!./bind-expr-defines.AstNode} ast
+   * @return {!Array<./bind-expr-defines.AstNode>}
+   * @private
+   */
+  getInvocationArgNodes_(ast) {
+    if (ast.args.length === 2 && ast.args[1].type === AstNodeType.ARGS) {
+      const argsNode = ast.args[1];
+      if (argsNode.args.length === 0) {
+        return [];
+      } else if (argsNode.args.length === 1 &&
+          argsNode.args[0].type === AstNodeType.ARRAY) {
+        const arrayNode = argsNode.args[0];
+        return arrayNode.args || [];
+      }
+    }
+    return ast.args || [];
+  }
+
+  /**
    * Recursively evaluates and returns value of `node` and its children.
    * @param {./bind-expr-defines.AstNode} node
    * @param {!Object} scope
-   * @param {!Object<string, !./bind-macro.BindMacro>} macros
    * @throws {Error}
    * @return {BindExpressionResultDef}
    * @private
@@ -288,7 +314,7 @@ export class BindExpression {
 
       case AstNodeType.INVOCATION:
         // Built-in functions and macros don't have a caller object.
-        const hasCaller = (args[0] !== undefined);
+        const isBuiltInOrMacro = (args[0] === undefined);
 
         const caller = this.eval_(args[0], scope);
         const params = this.eval_(args[1], scope);
@@ -297,11 +323,12 @@ export class BindExpression {
         let validFunction;
         let unsupportedError;
 
-        if (!hasCaller) {
-          const macro = this.macros[method];
+        if (isBuiltInOrMacro) {
+          const macro = this.macros_[method];
           if (macro) {
             validFunction = function() {
-              return macro.evaluate(scope, Array.prototype.slice.call(arguments));
+              return macro.evaluate(
+                  scope, Array.prototype.slice.call(arguments));
             };
           } else {
             validFunction = FUNCTION_WHITELIST[BUILT_IN_FUNCTIONS][method];
@@ -367,7 +394,7 @@ export class BindExpression {
         }
         // Ignore Closure's type constraint for `hasOwnProperty`.
         if (Object.prototype.hasOwnProperty.call(
-              /** @type {Object} */ (target), member)) {
+            /** @type {Object} */ (target), member)) {
           return target[member];
         } else {
           this.memberAccessWarning_(target, member);
@@ -395,8 +422,8 @@ export class BindExpression {
 
       case AstNodeType.OBJECT_LITERAL:
         return (args.length > 0)
-            ? this.eval_(args[0], scope)
-            : map();
+          ? this.eval_(args[0], scope)
+          : map();
 
       case AstNodeType.OBJECT:
         const object = map();
@@ -466,8 +493,8 @@ export class BindExpression {
 
       case AstNodeType.TERNARY:
         return this.eval_(args[0], scope)
-            ? this.eval_(args[1], scope)
-            : this.eval_(args[2], scope);
+          ? this.eval_(args[1], scope)
+          : this.eval_(args[2], scope);
 
       case AstNodeType.ARROW_FUNCTION:
         const functionScope = map(scope);
