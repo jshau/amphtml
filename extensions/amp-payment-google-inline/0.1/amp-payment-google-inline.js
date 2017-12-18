@@ -3,15 +3,15 @@
  */
 
 import {ActionTrust} from '../../../src/action-trust';
-import {CSS} from '../../../build/amp-google-pay-inline-0.1.css';
+import {CSS} from '../../../build/amp-payment-google-inline-0.1.css';
 import {createCustomEvent} from '../../../src/event-helper';
 import {Services} from '../../../src/services';
 import {toWin} from '../../../src/types';
 
 /** @const {string} */
-const TAG = 'amp-google-pay-inline';
+const TAG = 'amp-payment-google-inline';
 
-class AmpGooglePayInline extends AMP.BaseElement {
+class AmpPaymentGoogleInline extends AMP.BaseElement {
   /** @param {!AmpElement} element */
   constructor(element) {
     super(element);
@@ -82,5 +82,5 @@ class AmpGooglePayInline extends AMP.BaseElement {
 }
 
 AMP.extension(TAG, '0.1', function(AMP) {
-  AMP.registerElement(TAG, AmpGooglePayInline, CSS);
+  AMP.registerElement(TAG, AmpPaymentGoogleInline, CSS);
 });
