@@ -2,14 +2,19 @@
  * @fileoverview Description of this file.
  */
 
-import {ActionTrust} from '../../../src/action-trust';
+import {PaymentDataRequest} from './amp-payment-google-types.js';
 import {CSS} from '../../../build/amp-payment-google-inline-0.1.css';
+import {ActionTrust} from '../../../src/action-trust';
+import {closestByTag, isJsonScriptTag} from '../../../src/dom';
 import {createCustomEvent} from '../../../src/event-helper';
+import {formOrNullForElement} from '../../../src/form';
+import {tryParseJson} from '../../../src/json';
 import {Services} from '../../../src/services';
 import {toWin} from '../../../src/types';
 
 /** @const {string} */
 const TAG = 'amp-payment-google-inline';
+
 
 class AmpPaymentGoogleInline extends AMP.BaseElement {
   /** @param {!AmpElement} element */
@@ -23,16 +28,13 @@ class AmpPaymentGoogleInline extends AMP.BaseElement {
 
     /** @const @private {!../../../src/service/viewer-impl.Viewer} */
     this.viewer_ = Services.viewerForDoc(element);
-
-    /** @const @private {!../../../src/service/action-impl.ActionService} */
-    this.actions_ = Services.actionServiceForDoc(element);
   }
 
   /** @override */
   buildCallback() {
     this.viewer_.whenFirstVisible()
-        .then(() => this.viewer_.sendMessageAwaitResponse('loadPayments', {}))
-        .then(this.render_.bind(this));
+        .then(() => this.viewer_.sendMessageAwaitResponse('getInlinePaymentIframeUrl', {}))
+        .then((data) => this.render_(data));
   }
 
   /** @override */
@@ -45,40 +47,152 @@ class AmpPaymentGoogleInline extends AMP.BaseElement {
    * {Object} data
    * @private
    */
-  render_(data) {
-    if (data.iframeSrc) {
+  render_(iframeSrc) {
+    this.addPaymentTokenInput_();
+
+    if (iframeSrc) {
       window.addEventListener('message', this.onMessage_.bind(this));
 
-      this.iframe_ = global.document.createElement('iframe');
-      this.iframe_.src = data.iframeSrc;
+      this.iframe_ = this.win.document.createElement('iframe');
+      this.iframe_.src = iframeSrc;
       this.iframe_.classList.add('google-pay-iframe');
       this.element.appendChild(this.iframe_);
     }
+
+    const enclosingForm = closestByTag(this.element, 'form');
+    if (!enclosingForm) {
+      this.user().error(
+          TAG, 'Should be inside a <form> element.');
+      return;
+    }
+
+    const enclosingAmpForm = formOrNullForElement(enclosingForm);
+    if (!enclosingAmpForm) {
+      this.user().error(
+          TAG, '<form> should have an associated AmpForm.');
+      return;
+    }
+
+    enclosingAmpForm.addPresubmitHandler(() => this.populatePaymentToken_());
   };
 
+  /**
+   * Handler for messages from the iframe.
+   * @private
+   */
   onMessage_(event) {
-    if (event.data.message === 'renderInstrumentSelector') {
-      this.viewer_.sendMessageAwaitResponse('renderInstrumentSelector', {})
+    if (event.data.message === 'loadPaymentData') {
+      this.viewer_.sendMessageAwaitResponse('loadPaymentData', this.getPaymentDataRequest_())
           .then((data) => {
-            this.iframe_.contentWindow.postMessage({
-              message: 'loadedPaymentData',
-              paymentData: data
-            }, '*');
-            this.firePaymentMethodChangedEvent_(data);
+            this.sendIframeMessage_('loadedPaymentData', data);
+            this.paymentTokenInput_.value = data.paymentMethodToken.token;
           });
-    } else if (event.data.message === 'googlePayLoaded') {
-      // Fire 'paymentMethodChanged' event when the iframe loads.
-      this.firePaymentMethodChangedEvent_(event.data.paymentInfo.defaultInstrument);
     }
   };
 
-  firePaymentMethodChangedEvent_(data) {
-    if (data.cardNumber && data.paymentToken) {
-      const name = 'paymentMethodChanged';
-      const event = createCustomEvent(this.win_, `${TAG}.${name}`, data);
-      this.actions_.trigger(this.element, name, event, ActionTrust.HIGH);
+  /**
+   * Add a hidden <input> element. This <input> element will contain the payment
+   * token and will send it to the server when the form containing the
+   * <amp-payment-google-inline> tag is submitted.
+   * @private
+   */
+  addPaymentTokenInput_() {
+    this.paymentTokenInput_ = this.win.document.createElement('input');
+    this.paymentTokenInput_.type = 'hidden';
+    this.paymentTokenInput_.id = 'google-pay-payment-token';
+    this.paymentTokenInput_.name = 'google-pay-payment-token';
+    this.element.appendChild(this.paymentTokenInput_);
+  }
+
+  /**
+   * @private
+   * @returns {!Promise}
+   */
+  populatePaymentToken_() {
+    // If the payment token is already present, then we can submit the form
+    // immediately.
+    // TODO(justinmanley): Handle the case where the user has tapped 'Continue'
+    // in the instrument selector and then immediately triggered the form submit
+    // (e.g. tapped 'Buy now') before the payment token was loaded and added to
+    // the <input> tag. We want to ensure that there is no race condition there.
+    if (this.paymentTokenInput_.value) {
+      return Promise.resolve();
     }
-  };
+
+    // If the payment token is not yet present, then we need to fetch it before
+    // submitting the form. This will happen if the user decides to use the
+    // default instrument shown in the inline widget.
+    return this.sendIframeMessageAwaitResponse_('loadDefaultPaymentData')
+        .then((data) => {
+          this.paymentTokenInput_.value = data.paymentMethodToken.token;
+        });
+  }
+
+  /**
+   * @private
+   * @returns {?PaymentDataRequest|undefined}
+   */
+  getPaymentDataRequest_() {
+    const scripts = this.element.getElementsByTagName('script');
+    if (scripts.length != 1) {
+      this.user().error(
+          TAG, 'Should contain exactly one <script> child.');
+      return;
+    }
+    const firstChild = scripts[0];
+    if (!isJsonScriptTag(firstChild)) {
+      this.user().error(TAG,
+          'PaymentDataRequest should be in a <script> tag with type="application/json".');
+      return;
+    }
+    const json = tryParseJson(firstChild.textContent, e => {
+      this.user().error(
+          TAG, 'Failed to parse PaymentDataRequest. Is it valid JSON?', e);
+    });
+    return json;
+  }
+
+  /**
+   * Send a message to the widget iframe and return a promise which will be
+   * fulfilled with the response to the message.
+   *
+   * @param {string} messageName
+   * @param {Object} [messagePayload]
+   * @returns {!Promise}
+   * @private
+   */
+  sendIframeMessageAwaitResponse_(messageName, messagePayload) {
+    const promise = new Promise((resolve, reject) => {
+      window.addEventListener('message', (event) => {
+        if (event.data.message === messageName) {
+          resolve(event.data.data);
+        }
+      });
+    });
+
+    this.sendIframeMessage_(messageName, messagePayload);
+
+    return promise;
+  }
+
+  /**
+   * Send a message to the widget iframe without waiting for a response.
+   *
+   * @param {string} messageName
+   * @param {Object} [messagePayload]
+   * @private
+   */
+  sendIframeMessage_(messageName, messagePayload) {
+    let message = {
+      message: messageName
+    };
+
+    if (messagePayload) {
+      message.data = messagePayload;
+    }
+
+    this.iframe_.contentWindow.postMessage(message, '*');
+  }
 }
 
 AMP.extension(TAG, '0.1', function(AMP) {
