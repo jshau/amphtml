@@ -88,6 +88,13 @@ const UserValidityState = {
   USER_INVALID: 'invalid',
 };
 
+/**
+ * Function called before form submission.
+ *
+ * @typedef {function():!Promise}
+ */
+let PresubmitHandlerDef;
+
 
 /** @private @const {string} */
 const REDIRECT_TO_HEADER = 'AMP-Redirect-To';
@@ -157,6 +164,9 @@ export class AmpForm {
 
     /** @const @private {?string} */
     this.xhrVerify_ = this.getXhrUrl_('verify-xhr');
+
+    /** @const @private {PresubmitHandlerDef[]} */
+    this.presubmitHandlers_ = [];
 
     /**
      * Indicates that the action will submit to canonical or not.
@@ -415,6 +425,7 @@ export class AmpForm {
     this.setState_(FormState_.SUBMITTING);
 
     const p = this.doVarSubs_(varSubsFields)
+        .then(() => this.executePresubmitHandlers_())
         .then(() => {
           this.triggerFormSubmitInAnalytics_();
           this.actions_.trigger(
@@ -751,6 +762,25 @@ export class AmpForm {
    */
   renderTemplatePromiseForTesting() {
     return this.renderTemplatePromise_;
+  }
+
+  /**
+   * Adds a handler to be executed before the form submits.
+   *
+   * @param {!PresubmitHandlerDef} handler
+   */
+  addPresubmitHandler(handler) {
+    this.presubmitHandlers_.push(handler);
+  }
+
+  /**
+   * Executes the presubmit handlers.
+   *
+   * @returns {!Promise}
+   * @private
+   */
+  executePresubmitHandlers_() {
+    return Promise.all(this.presubmitHandlers_.map(handler => handler()));
   }
 }
 
