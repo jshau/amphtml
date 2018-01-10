@@ -44,7 +44,7 @@ class StaticHandler(webapp2.RequestHandler):
     # in dev mode, set the cross origin headers
     if is_dev_mode():
       origin = self.request.headers.get('Origin', '')
-      if origin.startswith('http://localhost') or origin.endswith('.googleplex.com'):
+      if origin.startswith('http://localhost') or origin.endswith('.googleplex.com') or '.corp.google.com:' in origin:
         self.response.headers['Access-Control-Allow-Origin'] = origin
         self.response.headers['Access-Control-Allow-Credentials'] = 'true'
 

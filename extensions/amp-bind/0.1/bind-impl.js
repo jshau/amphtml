@@ -22,14 +22,13 @@ import {BindValidator} from './bind-validator';
 import {Services} from '../../../src/services';
 import {chunk, ChunkPriority} from '../../../src/chunk';
 import {dev, user} from '../../../src/log';
-import {dict, deepMerge} from '../../../src/utils/object';
+import {dict, deepMerge, map, pick} from '../../../src/utils/object';
 import {getMode} from '../../../src/mode';
 import {filterSplice} from '../../../src/utils/array';
 import {installServiceInEmbedScope} from '../../../src/service';
 import {invokeWebWorker} from '../../../src/web-worker/amp-worker';
 import {isArray, isObject, toArray} from '../../../src/types';
 import {isFiniteNumber} from '../../../src/types';
-import {map} from '../../../src/utils/object';
 import {parseJson, recursiveEquals} from '../../../src/json';
 import {reportError} from '../../../src/error';
 import {rewriteAttributeValue} from '../../../src/sanitizer';
@@ -124,6 +123,9 @@ export class Bind {
     /** @private {!../../../src/service/history-impl.History} */
     this.history_ = Services.historyForDoc(ampdoc);
 
+    /** @private {!Array<string>} */
+    this.overridableKeys_ = [];
+
     /**
      * Upper limit on number of bindings for performance.
      * @private {number}
@@ -147,7 +149,7 @@ export class Bind {
 
     /** @const @private {!../../../src/service/viewer-impl.Viewer} */
     this.viewer_ = Services.viewerForDoc(this.ampdoc);
-    this.viewer_.onMessage('setState', this.setStateFromViewer_.bind(this));
+    this.viewer_.onMessage('premutate', this.premutate_.bind(this));
 
     const bodyPromise = (opt_win)
       ? waitForBodyPromise(opt_win.document)
@@ -178,16 +180,20 @@ export class Bind {
         embedWin, 'bind', new Bind(this.ampdoc, embedWin));
   }
 
-  setStateFromViewer_(data) {
+  premutate_(data) {
     return this.initializePromise_
       .then(() => {
-        return this.setState(data.state);
-      })
-      .then(() => {
-        return {
-          rendered: true
-        };
+        return this.setState(pick(data.state, this.overridableKeys_));
       });
+  }
+
+  /**
+   * Marks the given key as overridable so that it can be overriden by
+   * a premutate message from the viewer.
+   * @param {string} key
+   */
+  makeStateKeyOverridable(key) {
+    this.overridableKeys_.push(key);
   }
 
   /**
