@@ -381,7 +381,9 @@ export class AmpA4A extends AMP.BaseElement {
     // AMP creatives will be injected as part of the promise chain created
     // within onLayoutMeasure, this is only relevant to non-AMP creatives
     // therefore we want this to match the 3p priority.
-    return 2;
+    const isPWA = !this.element.getAmpDoc().isSingleDoc();
+    // give the ad higher priority if it is inside a PWA
+    return isPWA ? 1 : 2;
   }
 
   /** @override */
@@ -1126,7 +1128,7 @@ export class AmpA4A extends AMP.BaseElement {
   }
 
   /**
-   * @return {!function()} function that when called will verify if current
+   * @return {function()} function that when called will verify if current
    *    ad retrieval is current (meaning unlayoutCallback was not executed).
    *    If not, will throw cancellation exception;
    * @throws {Error}
@@ -1738,7 +1740,7 @@ export class AmpA4A extends AMP.BaseElement {
   /**
    * Whether preferential render should still be utilized if web crypto is unavailable,
    * and crypto signature header is present.
-   * @return {!boolean}
+   * @return {boolean}
    */
   shouldPreferentialRenderWithoutCrypto() {
     return false;

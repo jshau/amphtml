@@ -37,7 +37,7 @@ describe('preconnect', () => {
 
   function getPreconnectIframe(detectFeatures = false) {
     return createIframePromise().then(iframe => {
-      iframeClock = lolex.install(iframe.win);
+      iframeClock = lolex.install({target: iframe.win});
       if (detectFeatures) {
         setPreconnectFeaturesForTesting(null);
       } else {
