@@ -15,47 +15,31 @@
  */
 
 
-import {listen} from '../../../src/event-helper';
-import {dict} from '../../../src/utils/object';
 import {iterateCursor} from '../../../src/dom';
+import {listen} from '../../../src/event-helper';
 import {
-  getFieldAsObject,
-  setFieldIdForElement,
   elementOrNullForFieldId,
+  getFieldAsObject,
+  setFieldIdForElement
 } from '../../../src/field';
 
 /**
- * The list of touch event properites to copy.
- * @const {!Array<string>}
- */
-const EVENT_PROPERTIES = [
-  'timeStamp', 'type',
-];
-
-/**
- * The list of target element properties to copy.
- * @const {!Array<string>}
- */
-const TARGET_ELEMENT_ATTRIBUTES = [
-  'autocomplete'
-];
-
-/**
- * @const {string} Request name to set a field's value.
+ * Request name to set a field's value.
+ * @const {string}
  */
 const SET_FIELD_VALUES = 'setFieldValues';
 
 /**
- * @const {string} Request name to set focus on an element.
+ * Request name to set focus on an element.
+ * @const {string}
  */
 const SET_FOCUS = 'setFocus';
 
-
 /**
- * @fileoverview Forward input focus events from the AMP doc to the viewer.
+ * @fileoverview Forward form events from the current AMP document to the
+ * enclosing AMP Viewer.
  */
-export class FocusHandler {
-
+export class FormEventHandler {
   /**
    * @param {!Window} win
    * @param {!./messaging/messaging.Messaging} messaging
@@ -63,66 +47,69 @@ export class FocusHandler {
   constructor(win, messaging) {
     /** @const {!Window} */
     this.win = win;
+
     /** @const @private {!./messaging/messaging.Messaging} */
     this.messaging_ = messaging;
-    /**
-     * @const @private {!Array<function()>}
-     */
-    this.unlistenHandlers_ = [];
 
-    this.fields = dict();
-
-    messaging.registerHandler(SET_FIELD_VALUES, this.setFieldValuesHandler_.bind(this));
-    messaging.registerHandler(SET_FOCUS, this.setFocusHandler_.bind(this));
-
-    this.listenForFocusEvents_();
-  }
-
-  listenForFocusEvents_() {
-    const doc = this.win.document;
-
-    const options = {
-      capture: false,
-    };
-
-    this.fields = dict();
-    iterateCursor(doc.querySelectorAll('form'), (form) => {
-      let id = form.getAttribute('id');
-      iterateCursor(form.elements, (element) => {
-        setFieldIdForElement(element);
-        this.unlistenHandlers_.push(listen(element, 'focus', this.handleFocusEvent_.bind(this), options));
-      });
-    });
-
-  }
-
-  unlisten_() {
-    this.unlistenHandlers_.forEach(unlisten => unlisten());
-    this.unlistenHandlers_.length = 0;
+    this.listenForFormEvents_();
+    this.listenForViewerEvents_();
   }
 
   /**
+   * Attach forwarding listeners for 'focus', 'change', and 'blur' events to
+   * every form input within the AMP document, to propagate the given events
+   * to the enclosing Viewer.
+   * @private
+   */
+  listenForFormEvents_() {
+    const handleEvent = this.handleEvent_.bind(this);
+    const options = {capture: false};
+
+    iterateCursor(this.win.document.querySelectorAll('form'), (form) => {
+      iterateCursor(form.elements, (element) => {
+        setFieldIdForElement(element);
+        listen(element, 'focus', handleEvent, options);
+        listen(element, 'change', handleEvent, options);
+        listen(element, 'blur', handleEvent, options);
+      });
+    });
+  }
+
+  /**
+   * Forwards a single form field event to the Viewer.
    * @param {!Event} e
    * @private
    */
-  handleFocusEvent_(e) {
-    const focusedField = e.target;
-    const form = focusedField.form;
-    const fields = [];
-    for (let i = 0; i < form.elements.length; i++) {
-      fields.push(getFieldAsObject(form.elements[i]));
+  handleEvent_(e) {
+    const formFields = [];
+    for (let i = 0; i < e.target.form.elements.length; i++) {
+      formFields.push(getFieldAsObject(e.target.form.elements[i]));
     }
-    this.messaging_.sendRequest('focus', {
-      field: getFieldAsObject(focusedField),
+    const message = {
+      field: getFieldAsObject(e.target),
       form: {
-        id: form.id,
-        fields: fields
+        fields: formFields,
+        id: e.target.form.id
       }
-    }, false);
+    };
+
+    this.messaging_.sendRequest(e.type, message, false);
   }
 
   /**
-   * Handles setFieldValues requests from the viewer to set the value of certain fields.
+   * Attach listeners for events sent by the Viewer.
+   * @private
+   */
+  listenForViewerEvents_() {
+    this.messaging_.registerHandler(
+        SET_FIELD_VALUES, this.setFieldValuesHandler_.bind(this));
+    this.messaging_.registerHandler(
+        SET_FOCUS, this.setFocusHandler_.bind(this));
+  }
+
+  /**
+   * Handles setFieldValues requests from the viewer to set the value of certain
+   * fields.
    * @param {string} type Unused.
    * @param {*} payload Object containing the field ampIds and values to set.
    * @param {boolean} awaitResponse
@@ -145,14 +132,17 @@ export class FocusHandler {
     if (!awaitResponse) {
       return undefined;
     } else if (missingAmpIds.length) {
-      return Promise.reject('Could not find form field(s) with ampId = ' + missingAmpIds.join(', '));
+      return Promise.reject(
+          'Could not find form field(s) with ampId = ' +
+          missingAmpIds.join(', '));
     } else {
       return Promise.resolve({});
     }
   }
 
   /**
-   * Handles setFocus requests from the viewer to set the focus on a given field.
+   * Handles setFocus requests from the viewer to set the focus on a given
+   * field.
    * @param {string} type Unused.
    * @param {*} payload Object containing the ampId of the field to set focus on.
    * @param {boolean} awaitResponse
@@ -160,14 +150,15 @@ export class FocusHandler {
    * @private
    */
   setFocusHandler_(type, payload, awaitResponse) {
-    const missingAmpIds = [];
     const element = elementOrNullForFieldId(payload.ampId);
 
     if (!element) {
-      return awaitResponse ? Promise.reject('Could not find form field with ampId = ' + payload.ampId) : undefined;
+      return awaitResponse ?
+          Promise.reject(
+              'Could not find form field with ampId = ' + payload.ampId) :
+          undefined;
     }
     element.focus();
     return awaitResponse ? Promise.resolve({}) : undefined;
   }
-
 }

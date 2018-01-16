@@ -20,7 +20,7 @@ import {
   parseMessage,
 } from './messaging/messaging';
 import {TouchHandler} from './touch-handler';
-import {FocusHandler} from './focus-handler';
+import {FormEventHandler} from './form-event-handler';
 import {getAmpdoc} from '../../../src/service';
 import {isIframed} from '../../../src/dom';
 import {listen, listenOnce} from '../../../src/event-helper';
@@ -174,7 +174,7 @@ export class AmpViewerIntegration {
       this.initTouchHandler_(messaging);
     }
     // TODO(williamsjosh): put this behind a capability check
-    this.initFocusHandler_(messaging);
+    this.initFormEventHandler_(messaging);
   }
 
   /**
@@ -199,8 +199,8 @@ export class AmpViewerIntegration {
    * @param {!Messaging} messaging
    * @private
    */
-  initFocusHandler_(messaging) {
-    new FocusHandler(this.win, messaging);
+  initFormEventHandler_(messaging) {
+    new FormEventHandler(this.win, messaging);
   }
 }
 
