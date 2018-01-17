@@ -56,7 +56,7 @@ export class FormEventHandler {
   }
 
   /**
-   * Attach forwarding listeners for 'focus', 'change', and 'blur' events to
+   * Attach forwarding listeners for 'focus', 'input', and 'blur' events to
    * every form input within the AMP document, to propagate the given events
    * to the enclosing Viewer.
    * @private
@@ -69,7 +69,7 @@ export class FormEventHandler {
       iterateCursor(form.elements, (element) => {
         setFieldIdForElement(element);
         listen(element, 'focus', handleEvent, options);
-        listen(element, 'change', handleEvent, options);
+        listen(element, 'input', handleEvent, options);
         listen(element, 'blur', handleEvent, options);
       });
     });
