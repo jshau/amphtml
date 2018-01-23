@@ -20,7 +20,7 @@ import {listen} from '../../../src/event-helper';
 import {
   elementOrNullForFieldId,
   getFieldAsObject,
-  setFieldIdForElement
+  setFieldIdForElement,
 } from '../../../src/field';
 
 /**
@@ -65,8 +65,8 @@ export class FormEventHandler {
     const handleEvent = this.handleEvent_.bind(this);
     const options = {capture: false};
 
-    iterateCursor(this.win.document.querySelectorAll('form'), (form) => {
-      iterateCursor(form.elements, (element) => {
+    iterateCursor(this.win.document.querySelectorAll('form'), form => {
+      iterateCursor(form.elements, element => {
         setFieldIdForElement(element);
         listen(element, 'focus', handleEvent, options);
         listen(element, 'input', handleEvent, options);
@@ -82,6 +82,12 @@ export class FormEventHandler {
    */
   handleEvent_(e) {
     const formFields = [];
+
+    // Remove any previous autofill styling if a user manually modifies a field.
+    if (e.type === 'input') {
+      e.target.classList.remove('i-amphtml-amp-viewer-autofill');
+    }
+
     for (let i = 0; i < e.target.form.elements.length; i++) {
       formFields.push(getFieldAsObject(e.target.form.elements[i]));
     }
@@ -89,7 +95,7 @@ export class FormEventHandler {
       field: getFieldAsObject(e.target),
       form: {
         fields: formFields,
-        id: e.target.form.id
+        id: e.target.form.id,
       }
     };
 
@@ -123,6 +129,7 @@ export class FormEventHandler {
       const element = elementOrNullForFieldId(ampId);
       if (element) {
         element.value = payload.fields[i].value;
+        element.classList.add('i-amphtml-amp-viewer-autofill');
         element.dispatchEvent(new Event('change', {bubbles: true}));
       } else {
         missingAmpIds.push(ampId);

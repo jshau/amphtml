@@ -29,6 +29,8 @@ import {dict} from '../../../src/utils/object';
 import {getData} from '../../../src/event-helper';
 import {getSourceUrl} from '../../../src/url';
 import {Services} from '../../../src/services';
+import {installStylesForDoc} from '../../../src/style-installer';
+import {CSS} from '../../../build/amp-viewer-integration-0.1.css';
 
 const TAG = 'amp-viewer-integration';
 const APP = '__AMPHTML__';
@@ -205,5 +207,6 @@ export class AmpViewerIntegration {
 }
 
 AMP.extension(TAG, '0.1', function(AMP) {
+  installStylesForDoc(AMP.ampdoc, CSS, () => {}, false, TAG);
   new AmpViewerIntegration(AMP.win).init();
 });

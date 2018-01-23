@@ -152,6 +152,7 @@ declareExtension('amp-viewer-integration', '0.1', {
   // a long time to learn that it should start process other extensions
   // faster.
   loadPriority: 'high',
+  hasCss: true,
 });
 declareExtension('amp-video', '0.1', false);
 declareExtension('amp-vk', '0.1', false);
