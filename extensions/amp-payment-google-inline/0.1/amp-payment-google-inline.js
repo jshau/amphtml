@@ -2,13 +2,13 @@
  * @fileoverview Description of this file.
  */
 
-import {PaymentDataRequest} from './amp-payment-google-types.js';
 import {CSS} from '../../../build/amp-payment-google-inline-0.1.css';
 import {ActionTrust} from '../../../src/action-trust';
 import {closestByTag, isJsonScriptTag} from '../../../src/dom';
 import {createCustomEvent} from '../../../src/event-helper';
 import {formOrNullForElement} from '../../../src/form';
 import {tryParseJson} from '../../../src/json';
+import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {Services} from '../../../src/services';
 import {toWin} from '../../../src/types';
 
@@ -16,15 +16,12 @@ import {toWin} from '../../../src/types';
 const TAG = 'amp-payment-google-inline';
 
 
-class AmpPaymentGoogleInline extends AMP.BaseElement {
+class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
   /** @param {!AmpElement} element */
   constructor(element) {
     super(element);
 
     this.iframe_ = null;
-
-    /** @const @private {!Window} */
-    this.win_ = toWin(element.ownerDocument.defaultView);
 
     /** @const @private {!../../../src/service/viewer-impl.Viewer} */
     this.viewer_ = Services.viewerForDoc(element);
@@ -32,6 +29,7 @@ class AmpPaymentGoogleInline extends AMP.BaseElement {
 
   /** @override */
   buildCallback() {
+    super.buildCallback();
     this.viewer_.whenFirstVisible()
         .then(() => this.viewer_.sendMessageAwaitResponse('getInlinePaymentIframeUrl', {}))
         .then((data) => this.render_(data));
@@ -48,8 +46,6 @@ class AmpPaymentGoogleInline extends AMP.BaseElement {
    * @private
    */
   render_(iframeSrc) {
-    this.addPaymentTokenInput_();
-
     if (iframeSrc) {
       window.addEventListener('message', this.onMessage_.bind(this));
 
@@ -85,37 +81,25 @@ class AmpPaymentGoogleInline extends AMP.BaseElement {
       this.viewer_.sendMessageAwaitResponse('loadPaymentData', this.getPaymentDataRequest_())
           .then((data) => {
             this.sendIframeMessage_('loadedPaymentData', data);
-            this.paymentTokenInput_.value = data.paymentMethodToken.token;
+            this.getPaymentTokenInput_().value = data.paymentMethodToken.token;
           });
     }
   };
-
-  /**
-   * Add a hidden <input> element. This <input> element will contain the payment
-   * token and will send it to the server when the form containing the
-   * <amp-payment-google-inline> tag is submitted.
-   * @private
-   */
-  addPaymentTokenInput_() {
-    this.paymentTokenInput_ = this.win.document.createElement('input');
-    this.paymentTokenInput_.type = 'hidden';
-    this.paymentTokenInput_.id = 'google-pay-payment-token';
-    this.paymentTokenInput_.name = 'google-pay-payment-token';
-    this.element.appendChild(this.paymentTokenInput_);
-  }
 
   /**
    * @private
    * @returns {!Promise}
    */
   populatePaymentToken_() {
+    const input = this.getPaymentTokenInput_();
+
     // If the payment token is already present, then we can submit the form
     // immediately.
     // TODO(justinmanley): Handle the case where the user has tapped 'Continue'
     // in the instrument selector and then immediately triggered the form submit
     // (e.g. tapped 'Buy now') before the payment token was loaded and added to
     // the <input> tag. We want to ensure that there is no race condition there.
-    if (this.paymentTokenInput_.value) {
+    if (input.value) {
       return Promise.resolve();
     }
 
@@ -124,32 +108,8 @@ class AmpPaymentGoogleInline extends AMP.BaseElement {
     // default instrument shown in the inline widget.
     return this.sendIframeMessageAwaitResponse_('loadDefaultPaymentData')
         .then((data) => {
-          this.paymentTokenInput_.value = data.paymentMethodToken.token;
+          input.value = data.paymentMethodToken.token;
         });
-  }
-
-  /**
-   * @private
-   * @returns {?PaymentDataRequest|undefined}
-   */
-  getPaymentDataRequest_() {
-    const scripts = this.element.getElementsByTagName('script');
-    if (scripts.length != 1) {
-      this.user().error(
-          TAG, 'Should contain exactly one <script> child.');
-      return;
-    }
-    const firstChild = scripts[0];
-    if (!isJsonScriptTag(firstChild)) {
-      this.user().error(TAG,
-          'PaymentDataRequest should be in a <script> tag with type="application/json".');
-      return;
-    }
-    const json = tryParseJson(firstChild.textContent, e => {
-      this.user().error(
-          TAG, 'Failed to parse PaymentDataRequest. Is it valid JSON?', e);
-    });
-    return json;
   }
 
   /**
@@ -192,6 +152,28 @@ class AmpPaymentGoogleInline extends AMP.BaseElement {
     }
 
     this.iframe_.contentWindow.postMessage(message, '*');
+  }
+
+  /**
+   * @protected
+   * @returns {Element}
+   */
+  getPaymentTokenInput_() {
+    const input = this.win.document.getElementById(this.paymentTokenInputId_);
+    if (!input) {
+      this.user().error(
+          this.getTag_(),
+          'Document must contain an element with ID ' + this.paymentTokenInputId_);
+    }
+
+    if (input.nodeName !== 'INPUT') {
+      this.user().error(
+          this.getTag_(),
+          PAYMENT_TOKEN_INPUT_ID_ATTRIBUTE_ + ' must specify the ID of an <input> ' +
+          'element; ' + this.paymentTokenInputId_ + ' is a ' + input.nodeName + '.');
+    }
+
+    return input;
   }
 }
 
