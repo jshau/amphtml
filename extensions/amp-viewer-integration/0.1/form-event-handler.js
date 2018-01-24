@@ -21,6 +21,8 @@ import {
   elementOrNullForFieldId,
   getFieldAsObject,
   setFieldIdForElement,
+  setAutofillForElement,
+  clearAutofillForElement,
 } from '../../../src/field';
 
 /**
@@ -96,7 +98,7 @@ export class FormEventHandler {
       form: {
         fields: formFields,
         id: e.target.form.id,
-      }
+      },
     };
 
     this.messaging_.sendRequest(e.type, message, false);
@@ -129,7 +131,14 @@ export class FormEventHandler {
       const element = elementOrNullForFieldId(ampId);
       if (element) {
         element.value = payload.fields[i].value;
-        element.classList.add('i-amphtml-amp-viewer-autofill');
+        if (element.value !== '') {
+          setAutofillForElement(element, payload.fields[i].value);
+          element.classList.add('i-amphtml-amp-viewer-autofill');
+        } else {
+          clearAutofillForElement(element);
+          element.classList.remove('i-amphtml-amp-viewer-autofill');
+        }
+
         element.dispatchEvent(new Event('change', {bubbles: true}));
       } else {
         missingAmpIds.push(ampId);
