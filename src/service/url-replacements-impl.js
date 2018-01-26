@@ -513,6 +513,18 @@ export class GlobalVariableSource extends VariableSource {
       return this.getStoryValue_(storyVariables => storyVariables.pageId,
           'STORY_PAGE_ID');
     });
+
+    this.setAsync('FIRST_CONTENTFUL_PAINT', () => {
+      return Services.performanceFor(this.ampdoc.win).getFirstContentfulPaint();
+    });
+
+    this.setAsync('FIRST_VIEWPORT_READY', () => {
+      return Services.performanceFor(this.ampdoc.win).getFirstViewportReady();
+    });
+
+    this.setAsync('MAKE_BODY_VISIBLE', () => {
+      return Services.performanceFor(this.ampdoc.win).getMakeBodyVisible();
+    });
   }
 
   /**
@@ -642,40 +654,6 @@ export class UrlReplacements {
 
     /** @type {!Expander} */
     this.expander_ = new Expander(this.variableSource_);
-  }
-
-  /**
-   * Synchronously expands the provided URL by replacing all known variables with
-   * their resolved values. Optional `opt_bindings` can be used to add new
-   * variables or override existing ones.  Any async bindings are ignored.
-   *
-   * TODO(mkhatib, #6322): Deprecate and please use expandUrlSync or expandStringSync.
-   * @param {string} url
-   * @param {!Object<string, (ResolverReturnDef|!SyncResolverDef)>=} opt_bindings
-   * @param {!Object<string, ResolverReturnDef>=} opt_collectVars
-   * @param {!Object<string, boolean>=} opt_whiteList Optional white list of names
-   *     that can be substituted.
-   * @return {string}
-   */
-  expandSync(url, opt_bindings, opt_collectVars, opt_whiteList) {
-    return this.expandUrlSync(
-        url, opt_bindings, opt_collectVars, opt_whiteList);
-  }
-
-  /**
-   * Expands the provided URL by replacing all known variables with their
-   * resolved values. Optional `opt_bindings` can be used to add new variables
-   * or override existing ones.
-   *
-   * TODO(mkhatib, #6322): Deprecate and please use expandUrlAsync or expandStringAsync.
-   * @param {string} url
-   * @param {!Object<string, *>=} opt_bindings
-   * @param {!Object<string, boolean>=} opt_whiteList Optional white list of names
-   *     that can be substituted.
-   * @return {!Promise<string>}
-   */
-  expandAsync(url, opt_bindings, opt_whiteList) {
-    return this.expandUrlAsync(url, opt_bindings, opt_whiteList);
   }
 
 
@@ -905,7 +883,7 @@ export class UrlReplacements {
       if (!whitelist || !whitelist['QUERY_PARAM']) {
         // override whitelist and expand defaultUrlParams;
         const overrideWhitelist = {'QUERY_PARAM': true};
-        defaultUrlParams = this.expandSync(
+        defaultUrlParams = this.expandUrlSync(
             defaultUrlParams,
             /* opt_bindings */ undefined,
             /* opt_collectVars */ undefined,
@@ -915,7 +893,7 @@ export class UrlReplacements {
     }
 
     if (whitelist) {
-      href = this.expandSync(
+      href = this.expandUrlSync(
           href,
           /* opt_bindings */ undefined,
           /* opt_collectVars */ undefined,

@@ -99,9 +99,6 @@ export class RequestHandler {
 
     /** @private {?JsonObject} */
     this.lastTrigger_ = null;
-
-    /** @private {?Promise<string>} */
-    this.sendPromise_ = null;
   }
 
   /**
@@ -113,18 +110,18 @@ export class RequestHandler {
    * @param {!Object<string, *>} dynamicBindings A mapping of variables to
    *     stringable values. For example, values could be strings, functions that
    *     return strings, promises, etc.
-   * @return {!Promise<string>}
    */
   send(configParams, trigger, expansionOption, dynamicBindings) {
     this.lastTrigger_ = trigger;
     const triggerParams = trigger['extraUrlParams'];
-
+    const isImmediate =
+        (trigger['immediate'] === true) || (this.maxDelay_ == 0);
     if (!this.baseUrlPromise_) {
       expansionOption.freezeVar('extraUrlParams');
       this.baseUrlTemplatePromise_ =
           this.variableService_.expandTemplate(this.baseUrl, expansionOption);
       this.baseUrlPromise_ = this.baseUrlTemplatePromise_.then(baseUrl => {
-        return this.urlReplacementService_.expandAsync(
+        return this.urlReplacementService_.expandUrlAsync(
             baseUrl, dynamicBindings, this.whiteList_);
       });
     };
@@ -135,7 +132,7 @@ export class RequestHandler {
           // Construct the extraUrlParamsString: Remove null param and encode component
           const expandedExtraUrlParamsStr =
               this.getExtraUrlParamsString_(expandExtraUrlParams);
-          return this.urlReplacementService_.expandAsync(
+          return this.urlReplacementService_.expandUrlAsync(
               expandedExtraUrlParamsStr, dynamicBindings, this.whiteList_);
         });
 
@@ -153,41 +150,34 @@ export class RequestHandler {
     }
 
     this.extraUrlParamsPromise_.push(extraUrlParamsPromise);
-
-    return this.trigger_();
+    this.trigger_(isImmediate);
   }
 
   /**
-   * Dispose function that clear reqeust handler state.
+   * Dispose function that clear request handler state.
    */
   dispose() {
-    if (this.timeoutId_) {
-      this.win.clearTimeout(this.timeoutId_);
-    }
     this.reset_();
   }
 
   /**
    * Function that schedule the actual request send.
+   * @param {boolean} isImmediate
    * @private
    */
-  trigger_() {
-    if (!this.isBatched_) {
-      return this.fire_();
-    }
-    // If is batched
-    if (!this.timeoutId_) {
-      // schedule fire_ after certain time
-      return this.sendPromise_ = new Promise(resolve => {
-        this.timeoutId_ = this.win.setTimeout(() => {
-          this.fire_().then(request => {
-            resolve(request);
-          });
-        }, this.maxDelay_ * 1000);
-      });
+  trigger_(isImmediate) {
+    if (isImmediate) {
+      this.fire_();
+      return;
     }
 
-    return this.sendPromise_;
+    // If is batched and not immediate
+    if (!this.timeoutId_) {
+      // schedule fire_ after certain time
+      this.timeoutId_ = this.win.setTimeout(() => {
+        this.fire_();
+      }, this.maxDelay_ * 1000);
+    }
   }
 
   /**
@@ -202,9 +192,10 @@ export class RequestHandler {
     const lastTrigger = /** @type {!JsonObject} */ (this.lastTrigger_);
     this.reset_();
 
-    return baseUrlTemplatePromise.then(preUrl => {
+
+    baseUrlTemplatePromise.then(preUrl => {
       this.preconnect_.url(preUrl, true);
-      return baseUrlPromise.then(baseUrl => {
+      baseUrlPromise.then(baseUrl => {
         let requestUrlPromise;
         if (this.batchingPlugin_) {
           requestUrlPromise =
@@ -213,9 +204,8 @@ export class RequestHandler {
           requestUrlPromise =
               this.constructExtraUrlParamStrs_(baseUrl, extraUrlParamsPromise);
         }
-        return requestUrlPromise.then(requestUrl => {
+        requestUrlPromise.then(requestUrl => {
           this.handler_(requestUrl, lastTrigger);
-          return requestUrl;
         });
       });
     });
@@ -266,13 +256,15 @@ export class RequestHandler {
    * @private
    */
   reset_() {
+    if (this.timeoutId_) {
+      this.win.clearTimeout(this.timeoutId_);
+    }
     this.baseUrlPromise_ = null;
     this.baseUrlTemplatePromise_ = null;
     this.extraUrlParamsPromise_ = [];
     this.batchSegmentPromises_ = [];
     this.timeoutId_ = null;
     this.lastTrigger_ = null;
-    this.sendPromise_ = null;
   }
 
   /**
