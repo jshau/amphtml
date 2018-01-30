@@ -165,7 +165,7 @@ export class AmpForm {
     /** @const @private {?string} */
     this.xhrVerify_ = this.getXhrUrl_('verify-xhr');
 
-    /** @const @private {PresubmitHandlerDef[]} */
+    /** @const @private {Array<PresubmitHandlerDef>} */
     this.presubmitHandlers_ = [];
 
     /**
