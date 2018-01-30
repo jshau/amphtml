@@ -110,15 +110,12 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
   constructor(element) {
     super(element);
 
-    // Initialize services. Note that accessing these services in the
-    // constructor throws an error in unit tests, so they are set in the
+    // Initialize the action service. Note that accessing this service in the
+    // constructor throws an error in unit tests, so it is set in the
     // buildCallback.
 
     /** @private {?../../../src/service/action-impl.ActionService} */
     this.actions_ = null;
-
-    /** @private @const {!../../../src/service/viewer-impl.Viewer} */
-    this.viewer_ = null;
   }
 
   /** @override */
@@ -131,9 +128,8 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
     super.buildCallback();
 
     this.actions_ = Services.actionServiceForDoc(this.element);
-    this.viewer_ = Services.viewerForDoc(this.element);
 
-    this.viewer_.whenFirstVisible()
+    this.viewer.whenFirstVisible()
         .then(() => this.render_());
   }
 
@@ -144,7 +140,7 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
   }
 
   onClickButton_() {
-    this.viewer_
+    this.viewer
         .sendMessageAwaitResponse('loadPaymentData', this.getPaymentDataRequest_())
         .then(data => {
           const name = LOAD_PAYMENT_DATA_EVENT_NAME;

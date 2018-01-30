@@ -4,6 +4,7 @@
 
 import {isJsonScriptTag} from './dom';
 import {tryParseJson} from './json';
+import {Services} from './services';
 
 /* Types for Google Payment APIs. */
 
@@ -39,7 +40,7 @@ import {tryParseJson} from './json';
  * @property {TransactionInfo} transactionInfo
  * @property {SwgParameters} swg
  */
-let PaymentDataRequest;
+let PaymentDataRequestDef;
 
 /**
  * Response returned by loadPaymentData.
@@ -60,40 +61,46 @@ let PaymentDataRequest;
  */
 export let PaymentData;
 
-const PAYMENT_TOKEN_INPUT_ID_ATTRIBUTE_ = "data-payment-token-input-id";
-
 export class AmpPaymentGoogleBase extends AMP.BaseElement {
   /** @param {!AmpElement} element */
   constructor(element) {
     super(element);
+
+    // Initialize services. Note that accessing the viewer service in the
+    // constructor throws an error in unit tests, so it is set in buildCallback.
+
+    /** @protected @const {!./service/viewer-impl.Viewer} */
+    this.viewer = null;
   }
 
   /** @override */
   buildCallback() {
-    /* @const @private {string} */
-    this.paymentTokenInputId_ = this.element.getAttribute(PAYMENT_TOKEN_INPUT_ID_ATTRIBUTE_);
+    this.viewer = Services.viewerForDoc(this.element);
   }
 
   /**
    * @protected
-   * @returns {?PaymentDataRequest|undefined}
+   * @returns {?PaymentDataRequestDef|undefined}
    */
   getPaymentDataRequest_() {
     const scripts = this.element.getElementsByTagName('script');
     if (scripts.length != 1) {
       this.user().error(
-          this.getTag_(), 'Should contain exactly one <script> child with JSON config.');
+          this.getTag_(),
+          'Should contain exactly one <script> child with JSON config.');
       return;
     }
     const firstChild = scripts[0];
     if (!isJsonScriptTag(firstChild)) {
       this.user().error(this.getTag_(),
-          'PaymentDataRequest should be in a <script> tag with type="application/json".');
+          'PaymentDataRequest should be in a <script> tag with ' +
+          'type="application/json".');
       return;
     }
     const json = tryParseJson(firstChild.textContent, e => {
       this.user().error(
-          this.getTag_(), 'Failed to parse PaymentDataRequest. Is it valid JSON?', e);
+          this.getTag_(),
+          'Failed to parse PaymentDataRequest. Is it valid JSON?', e);
     });
     return json;
   }
@@ -103,6 +110,6 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
    * @abstract
    */
   getTag_() {
-    throw new Error("Must be implemented by subclass");
+    throw new Error('Must be implemented by subclass');
   }
 }
