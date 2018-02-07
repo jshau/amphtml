@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import {createCustomEvent} from '../../../src/event-helper';
-import {Services} from '../../../src/services';
-import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {ActionTrust} from '../../../src/action-trust';
+import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
+import {Services} from '../../../src/services';
+import {createCustomEvent} from '../../../src/event-helper';
 
 /** @const {string} */
 const TAG = 'amp-payment-google-button';
@@ -105,7 +105,6 @@ function createButton(options = {}) {
 
 
 class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
-
   /** @param {!AmpElement} element */
   constructor(element) {
     super(element);
@@ -129,8 +128,10 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
 
     this.actions_ = Services.actionServiceForDoc(this.element);
 
-    this.viewer.whenFirstVisible()
-        .then(() => this.render_());
+    this.viewer.whenFirstVisible().then(() => {
+      this.prefetch_();
+      this.render_();
+    });
   }
 
   render_() {
@@ -139,9 +140,20 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
     }));
   }
 
+  /**
+   * Prefetch payment data to make loadPaymentData faster. Note that
+   * paymentDataRequest should be exactly same as in loadPaymentData to speed up
+   * the call.
+   */
+  prefetch_() {
+    this.viewer.sendMessage(
+        'prefetchPaymentData', this.getPaymentDataRequest_());
+  }
+
   onClickButton_() {
     this.viewer
-        .sendMessageAwaitResponse('loadPaymentData', this.getPaymentDataRequest_())
+        .sendMessageAwaitResponse(
+            'loadPaymentData', this.getPaymentDataRequest_())
         .then(data => {
           const name = LOAD_PAYMENT_DATA_EVENT_NAME;
           const event = createCustomEvent(this.win, `${TAG}.${name}`, data);
