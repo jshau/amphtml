@@ -51,6 +51,7 @@ export const ANALYTICS_CONFIG = /** @type {!JsonObject} */ ({
       'firstContentfulPaint': 'FIRST_CONTENTFUL_PAINT',
       'firstViewportReady': 'FIRST_VIEWPORT_READY',
       'makeBodyVisible': 'MAKE_BODY_VISIBLE',
+      'incrementalEngagedTime': 'INCREMENTAL_ENGAGED_TIME',
       'navRedirectCount': 'NAV_REDIRECT_COUNT',
       'navTiming': 'NAV_TIMING',
       'navType': 'NAV_TYPE',
@@ -1338,6 +1339,8 @@ export const ANALYTICS_CONFIG = /** @type {!JsonObject} */ ({
         'date=${timestamp}&' +
         'ampid=${clientId(_parsely_visitor)}',
       'pageview': '${basePrefix}&action=pageview',
+      'heartbeat': '${basePrefix}&action=heartbeat' +
+      '&tt=${totalEngagedTime}&inc=${incrementalEngagedTime(parsely-js)}',
     },
     'triggers': {
       'defaultPageview': {

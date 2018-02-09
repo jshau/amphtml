@@ -22,3 +22,4 @@ package-lock.json
 *.pyc
 *.swp
 *.swo
+yarn-error.log

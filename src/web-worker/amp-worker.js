@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+import {FromWorkerMessageDef, ToWorkerMessageDef} from './web-worker-defines';
+import {Services} from '../services';
+import {calculateEntryPointScriptUrl} from '../service/extension-location';
 import {dev} from '../log';
 import {getMode} from '../mode';
 import {getService, registerServiceBuilder} from '../service';
-import {calculateEntryPointScriptUrl} from '../service/extension-location';
-import {Services} from '../services';
 
 import {FromWorkerMessageDef, ToWorkerMessageDef} from './web-worker-defines';
 
