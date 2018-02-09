@@ -184,10 +184,10 @@ let MessageRequestDataDef;
  */
 export class AmpPaymentGoogleInlineService {
   constructor() {
-    /** @private {Map<int, MessageRequestDataDef>} */
+    // /** @private {Map<number, MessageRequestDataDef>} */
     this.requestData_ = map();
 
-    /** @private {int} */
+    /** @private {number} */
     this.nextMessageId_ = 0;
 
     const service = this;
@@ -247,7 +247,7 @@ export class AmpPaymentGoogleInlineService {
    *
    * @param {HTMLIFrameElement} iframe
    * @param {string} messageName
-   * @param {int} messageId
+   * @param {number} messageId
    * @param {!Object} [messagePayload]
    * @private
    */
@@ -263,7 +263,7 @@ export class AmpPaymentGoogleInlineService {
    * Send a message to the widget iframe without waiting for a response.
    *
    * @param {HTMLIFrameElement} iframe
-   * @param {{ message: string, messageId: ?int }} message
+   * @param {{ message: string, messageId: ?number }} message
    * @param {!Object} [messagePayload]
    * @private
    */
