@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import {mockServiceForDoc} from '../../../../testing/test-helper';
-import {AmpFormService} from '../../../../extensions/amp-form/0.1/amp-form';
 import '../amp-payment-google-inline';
+import {AmpFormService} from '../../../../extensions/amp-form/0.1/amp-form';
+import {mockServiceForDoc} from '../../../../testing/test-helper';
 
 /** @const {string} */
 const IFRAME_URL = 'http://example.com';

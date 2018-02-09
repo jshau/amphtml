@@ -1,7 +1,7 @@
 import {Services} from '../../../src/services';
-import {tryParseJson} from '../../../src/json';
 import {dev, user} from '../../../src/log';
 import {dict} from '../../../src/utils/object';
+import {tryParseJson} from '../../../src/json';
 
 
 /** @const {string} */

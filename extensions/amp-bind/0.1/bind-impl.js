@@ -181,22 +181,6 @@ export class Bind {
         embedWin, 'bind', new Bind(this.ampdoc, embedWin));
   }
 
-  premutate_(data) {
-    return this.initializePromise_
-      .then(() => {
-        return this.setState(pick(data.state, this.overridableKeys_));
-      });
-  }
-
-  /**
-   * Marks the given key as overridable so that it can be overriden by
-   * a premutate message from the viewer.
-   * @param {string} key
-   */
-  makeStateKeyOverridable(key) {
-    this.overridableKeys_.push(key);
-  }
-
   /**
    * Merges `state` into the current state and immediately triggers an
    * evaluation unless `opt_skipEval` is false.

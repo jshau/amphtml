@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import {mockServiceForDoc} from '../../../../testing/test-helper';
-import {Services} from '../../../../src/services';
-import * as sinon from 'sinon';
 import '../amp-payment-google-button';
+import * as sinon from 'sinon';
+import {Services} from '../../../../src/services';
+import {mockServiceForDoc} from '../../../../testing/test-helper';
 
 describes.realWin('amp-payment-google-button', {
   amp: {
@@ -48,7 +48,8 @@ describes.realWin('amp-payment-google-button', {
             },
           }));
 
-      const trigger = sandbox.spy(gPayButton.implementation_.actions_, 'trigger');
+      const trigger = sandbox.spy(
+          gPayButton.implementation_.actions_, 'trigger');
 
       const buttons = gPayButton.getElementsByTagName('button');
       expect(buttons.length).to.equal(1);

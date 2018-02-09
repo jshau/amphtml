@@ -19,9 +19,8 @@ import {Services} from '../services';
 import {calculateEntryPointScriptUrl} from '../service/extension-location';
 import {dev} from '../log';
 import {getMode} from '../mode';
-import {getService, registerServiceBuilder} from '../service';
 
-import {FromWorkerMessageDef, ToWorkerMessageDef} from './web-worker-defines';
+import {getService, registerServiceBuilder} from '../service';
 
 const TAG = 'web-worker';
 
@@ -92,7 +91,8 @@ class AmpWorker {
     } else {
       // This is hacky but its the only good way I can come up with to ensure that
       // we fetch the web worker with the right URL.
-      const ampJsUrl = document.querySelector('script[src$="/amp.js"]').src;
+      const ampJsUrl = this.win_.document.querySelector(
+          'script[src$="/amp.js"]').src;
       url = ampJsUrl.replace('/amp.js', '/ww.max.js');
     }
     dev().fine(TAG, 'Fetching web worker from', url);

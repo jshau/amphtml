@@ -2,10 +2,10 @@
  * @fileoverview Tests for the amp-payment-google-inline extension.
  */
 
+import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {CSS} from '../../../build/amp-payment-google-inline-0.1.css';
 import {closestByTag} from '../../../src/dom';
 import {formOrNullForElement} from '../../../src/form';
-import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {getServiceForDoc} from '../../../src/service';
 import {map} from '../../../src/utils/object';
 
@@ -76,7 +76,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     }
 
     enclosingAmpForm.addPresubmitHandler(() => this.populatePaymentToken_());
-  };
+  }
 
   /**
    * Handler for messages from the iframe. This handler is for requests sent
@@ -96,7 +96,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
             this.getPaymentTokenInput_().value = data.paymentMethodToken.token;
           });
     }
-  };
+  }
 
   /**
    * @private

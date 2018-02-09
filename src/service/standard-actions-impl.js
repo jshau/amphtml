@@ -214,11 +214,11 @@ export class StandardActions {
   }
 
   /**
-   * @param {!./action-impl.ActionInvocation} invocation
+   * @param {!./action-impl.ActionInvocation} unusedInvocation
    * @return {?Promise}
    * @private
    */
-  handleAmpOrderCompleted_(invocation) {
+  handleAmpOrderCompleted_(unusedInvocation) {
     this.viewer_.sendMessage('orderCompleted', {});
     return null;
   }

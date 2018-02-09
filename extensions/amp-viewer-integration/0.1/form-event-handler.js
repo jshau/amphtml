@@ -15,15 +15,15 @@
  */
 
 
-import {iterateCursor} from '../../../src/dom';
-import {listen} from '../../../src/event-helper';
 import {
+  clearAutofillForElement,
   elementOrNullForFieldId,
   getFieldAsObject,
-  setFieldIdForElement,
   setAutofillForElement,
-  clearAutofillForElement,
+  setFieldIdForElement,
 } from '../../../src/field';
+import {iterateCursor} from '../../../src/dom';
+import {listen} from '../../../src/event-helper';
 
 /**
  * Request name to set a field's value.
@@ -170,9 +170,9 @@ export class FormEventHandler {
 
     if (!element) {
       return awaitResponse ?
-          Promise.reject(
-              'Could not find form field with ampId = ' + payload.ampId) :
-          undefined;
+        Promise.reject(
+            'Could not find form field with ampId = ' + payload.ampId) :
+        undefined;
     }
     element.focus();
     return awaitResponse ? Promise.resolve({}) : undefined;

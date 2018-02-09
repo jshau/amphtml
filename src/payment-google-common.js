@@ -2,9 +2,9 @@
  * @fileoverview Description of this file.
  */
 
+import {Services} from './services';
 import {isJsonScriptTag} from './dom';
 import {tryParseJson} from './json';
-import {Services} from './services';
 
 /* Types for Google Payment APIs. */
 

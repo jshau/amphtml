@@ -44,7 +44,7 @@ describes.fakeWin('ActionService', {
     expect(sendMessageStub).to.be.calledOnce;
     expect(sendMessageStub.firstCall.args[0]).to.equal('actionConfig');
     expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
-        'config': config,
+      'config': config,
     });
   });
 });

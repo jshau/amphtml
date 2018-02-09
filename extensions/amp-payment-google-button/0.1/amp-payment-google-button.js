@@ -63,8 +63,8 @@ function createButton(options = {}) {
       options.buttonType = ButtonType.LONG;
     }
     const backgroundImage = options.buttonType == ButtonType.LONG ?
-        LONG_BUTTON_SVG :
-        SHORT_BUTTON_SVG;
+      LONG_BUTTON_SVG :
+      SHORT_BUTTON_SVG;
     const width = options.buttonType == ButtonType.LONG ? '240px' : '160px';
     const styles = [
       'background-color:#fff;', `background-image:${backgroundImage};`,
@@ -72,7 +72,7 @@ function createButton(options = {}) {
       'background-repeat:no-repeat;', 'background-size:contain;',
       'box-shadow:0 1px 3px 0 #6d6d6d;', 'border:0;', 'border-radius:4px;',
       'cursor:pointer;', 'height:40px;', 'outline:0;', 'padding:10px 0;',
-      `width:${width};`
+      `width:${width};`,
     ];
     button.setAttribute('style', styles.join(''));
     button.addEventListener('focus', function() {

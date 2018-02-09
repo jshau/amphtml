@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
+import {FormEventHandler} from './form-event-handler';
 import {
   Messaging,
   WindowPortEmulator,
   parseMessage,
 } from './messaging/messaging';
 import {Services} from '../../../src/services';
-import {FormEventHandler} from './form-event-handler';
 import {TouchHandler} from './touch-handler';
 import {dev} from '../../../src/log';
 import {dict} from '../../../src/utils/object';
 import {getAmpdoc} from '../../../src/service';
 import {getData} from '../../../src/event-helper';
 import {getSourceUrl} from '../../../src/url';
+import {installStylesForDoc} from '../../../src/style-installer';
 import {isIframed} from '../../../src/dom';
 import {listen, listenOnce} from '../../../src/event-helper';
 
