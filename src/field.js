@@ -20,6 +20,9 @@ const AUTOFILL_PROP_ = '__AMP_AUTOFILL';
 /** @const {string} */
 const FIELD_ID_PROP_ = '__AMP_FIELD_ID';
 
+/** @const {string} */
+const AUTOCOMPLETE_PROP_ = '__AMP_AUTOCOMPLETE';
+
 let currentFieldId = 1;
 
 const fieldIdMap = {};
@@ -75,6 +78,14 @@ export function clearAutofillForElement(element) {
   delete element[AUTOFILL_PROP_];
 }
 
+export function setAutocompleteForElement(element, autocomplete) {
+  element[AUTOCOMPLETE_PROP_] = autocomplete;
+}
+
+function getAutocompleteOrNullForElement_(element) {
+  return element[AUTOCOMPLETE_PROP_] || null;
+}
+
 /**
  * Returns field as a JSON object.
  * @param {!Element} element
@@ -87,7 +98,7 @@ export function getFieldAsObject(element) {
     type: element.type,
     name: element.name,
     value: element.value,
-    autocomplete: element.autocomplete,
+    autocomplete: getAutocompleteOrNullForElement_(element),
     autofill: getAutofillOrNullForElement(element),
   });
 }

@@ -19,11 +19,14 @@ import {
   clearAutofillForElement,
   elementOrNullForFieldId,
   getFieldAsObject,
+  setAutocompleteForElement,
   setAutofillForElement,
   setFieldIdForElement,
 } from '../../../src/field';
 import {iterateCursor} from '../../../src/dom';
 import {listen} from '../../../src/event-helper';
+import {base64EncodeFromBytes} from '../../../src/utils/base64';
+import {getCryptoRandomBytesArray} from '../../../src/utils/bytes';
 
 /**
  * Request name to set a field's value.
@@ -70,6 +73,14 @@ export class FormEventHandler {
     iterateCursor(this.win.document.querySelectorAll('form'), form => {
       iterateCursor(form.elements, element => {
         setFieldIdForElement(element);
+
+        // Suppress browser autofill for facilitated form inputs.
+        // We use a random value every time to prevent browsers from learning
+        // how to handle any individual value over time.
+        setAutocompleteForElement(element, element.autocomplete);
+        element.autocomplete =
+            base64EncodeFromBytes(getCryptoRandomBytesArray(this.win, 128));
+
         listen(element, 'focus', handleEvent, options);
         listen(element, 'input', handleEvent, options);
         listen(element, 'blur', handleEvent, options);
