@@ -128,10 +128,12 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
 
     this.actions_ = Services.actionServiceForDoc(this.element);
 
-    this.viewer.whenFirstVisible().then(() => {
-      this.prefetch_();
-      this.render_();
-    });
+    this.viewer.whenFirstVisible()
+        .then(() => super.initializePaymentClient_())
+        .then(() => {
+          this.prefetch_();
+          this.render_();
+        });
   }
 
   render_() {
@@ -170,3 +172,4 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
 AMP.extension(TAG, '0.1', AMP => {
   AMP.registerElement(TAG, AmpPaymentGoogleButton);
 });
+

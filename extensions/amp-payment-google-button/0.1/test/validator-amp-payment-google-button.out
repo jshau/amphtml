@@ -36,10 +36,19 @@ FAIL
 |        }
 |      </script>
 |    </amp-payment-google-button>
+|    <!-- Valid: with is-test-mode -->
+|    <amp-payment-google-button
+|      is-test-mode="true">
+|      <script type="application/json">
+|        {
+|          "config": "example"
+|        }
+|      </script>
+|    </amp-payment-google-button>
 |    <!-- Invalid: missing JSON config -->
 |    <amp-payment-google-button>
 >>   ^~~~~~~~~
-amp-payment-google-button/0.1/test/validator-amp-payment-google-button.html:39:2 Tag 'amp-payment-google-button' must have 1 child tags - saw 0 child tags. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-button) [AMP_TAG_PROBLEM]
+amp-payment-google-button/0.1/test/validator-amp-payment-google-button.html:48:2 Tag 'amp-payment-google-button' must have 1 child tags - saw 0 child tags. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-button) [AMP_TAG_PROBLEM]
 |    </amp-payment-google-button>
 |  </body>
 |  </html>

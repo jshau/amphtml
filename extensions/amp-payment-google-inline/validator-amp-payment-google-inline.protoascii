@@ -56,6 +56,10 @@ tags: {  # <amp-payment-google-inline>
     name: "data-payment-token-input-id"
     mandatory: true
   }
+  attrs: {
+    name: "is-test-mode"
+    value_regex_casei: "(false|true)"
+  }
   child_tags: {
     mandatory_num_child_tags: 1
     child_tag_name_oneof: "SCRIPT"

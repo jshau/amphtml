@@ -61,6 +61,40 @@ describes.realWin('amp-payment-google-inline', {
     ]);
   });
 
+  it('loads initialize payment client with isTestMode', () => {
+    const iframes = doc.getElementsByTagName('iframe');
+    expect(iframes.length).to.equal(0);
+
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('initializePaymentClient', {isTestMode: true})
+        .returns(Promise.resolve());
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('getInlinePaymentIframeUrl', {})
+        .returns(Promise.resolve(IFRAME_URL));
+
+    return getAmpPaymentGoogleInline(true /* isTestMode */).then(gPayInline => {
+      const iframes = gPayInline.getElementsByTagName('iframe');
+
+      expect(iframes.length).to.equal(1);
+      expect(iframes[0].src).to.equal(IFRAME_URL);
+    });
+  });
+
+  it('load iframe should fail if initialize payment client fails', () => {
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('initializePaymentClient', {isTestMode: true})
+        .returns(Promise.reject());
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('getInlinePaymentIframeUrl', {})
+        .returns(Promise.resolve(IFRAME_URL));
+
+    return getAmpPaymentGoogleInline(true /* isTestMode */).then(gPayInline => {
+      const iframes = gPayInline.getElementsByTagName('iframe');
+
+      expect(iframes.length).to.equal(0);
+    });
+  });
+
   it('loads the inline payment iframe', () => {
     viewerMock.sendMessageAwaitResponse
         .withArgs('getInlinePaymentIframeUrl', {})
@@ -122,7 +156,7 @@ describes.realWin('amp-payment-google-inline', {
     });
   });
 
-  function getAmpPaymentGoogleInline() {
+  function getAmpPaymentGoogleInline(opt_isTestMode) {
     const form = doc.createElement('form');
     form.setAttribute('method', 'post');
     form.setAttribute('action-xhr', '/my-form-handler');
@@ -140,6 +174,7 @@ describes.realWin('amp-payment-google-inline', {
 
     const inline = doc.createElement('amp-payment-google-inline');
     inline.setAttribute('data-payment-token-input-id', PAYMENT_TOKEN_INPUT_ID);
+    inline.setAttribute('is-test-mode', opt_isTestMode);
     form.appendChild(inline);
 
     const config = doc.createElement('script');
@@ -152,3 +187,4 @@ describes.realWin('amp-payment-google-inline', {
         .then(() => inline);
   }
 });
+

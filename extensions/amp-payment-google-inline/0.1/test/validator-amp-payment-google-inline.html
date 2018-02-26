@@ -36,6 +36,16 @@
       }
     </script>
   </amp-payment-google-inline>
+  <!-- Valid: with is-test-mode -->
+  <amp-payment-google-inline
+    data-payment-token-input-id="payment-token"
+    is-test-mode="true">
+    <script type="application/json">
+      {
+        "config": "example"
+      }
+    </script>
+  </amp-payment-google-inline>
   <!-- Invalid: missing data-payment-token-input-id -->
   <amp-payment-google-inline>
     <script type="application/json">

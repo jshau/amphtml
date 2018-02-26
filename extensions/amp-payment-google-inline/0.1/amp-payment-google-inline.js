@@ -33,6 +33,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     super.buildCallback();
 
     this.viewer.whenFirstVisible()
+        .then(() => super.initializePaymentClient_())
         .then(() => {
           return this.viewer
               .sendMessageAwaitResponse('getInlinePaymentIframeUrl', {});

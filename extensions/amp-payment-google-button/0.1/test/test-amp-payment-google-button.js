@@ -32,10 +32,52 @@ describes.realWin('amp-payment-google-button', {
     doc = win.document;
     viewerMock = mockServiceForDoc(env.sandbox, env.ampdoc, 'viewer', [
       'whenFirstVisible',
+      'sendMessage',
       'sendMessageAwaitResponse',
     ]);
 
     viewerMock.whenFirstVisible.returns(Promise.resolve());
+  });
+
+  it('should call initialize payment client before render button', () => {
+    const buttons = doc.getElementsByTagName('button');
+    expect(buttons.length).to.equal(0);
+
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('initializePaymentClient', {isTestMode: true})
+        .returns(Promise.resolve());
+
+    return getAmpPaymentGoogleButton(true /* isTestMode */).then(gPayButton => {
+      viewerMock.sendMessageAwaitResponse
+          .withArgs('loadPaymentData', sinon.match.any)
+          .returns(Promise.resolve({
+            paymentMethodToken: {
+              token: 'fakeToken',
+            },
+          }));
+
+      const buttons = gPayButton.getElementsByTagName('button');
+      expect(buttons.length).to.equal(1);
+    });
+  });
+
+  it('should not render button if initialize payment client fails', () => {
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('initializePaymentClient', {isTestMode: true})
+        .returns(Promise.reject());
+
+    return getAmpPaymentGoogleButton(true /* isTestMode */).then(gPayButton => {
+      viewerMock.sendMessageAwaitResponse
+          .withArgs('loadPaymentData', sinon.match.any)
+          .returns(Promise.resolve({
+            paymentMethodToken: {
+              token: 'fakeToken',
+            },
+          }));
+
+      const buttons = gPayButton.getElementsByTagName('button');
+      expect(buttons.length).to.equal(0);
+    });
   });
 
   it('loads a button and displays the selected instrument', () => {
@@ -67,8 +109,9 @@ describes.realWin('amp-payment-google-button', {
     });
   });
 
-  function getAmpPaymentGoogleButton() {
+  function getAmpPaymentGoogleButton(opt_isTestMode) {
     const button = doc.createElement('amp-payment-google-button');
+    button.setAttribute('is-test-mode', opt_isTestMode);
 
     const config = doc.createElement('script');
     config.setAttribute('type', 'application/json');
@@ -82,3 +125,4 @@ describes.realWin('amp-payment-google-button', {
         .then(() => button);
   }
 });
+

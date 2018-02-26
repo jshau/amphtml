@@ -52,6 +52,10 @@ tags: {  # <amp-payment-google-button>
   tag_name: "AMP-PAYMENT-GOOGLE-BUTTON"
   spec_name: "amp-payment-google-button"
   requires_extension: "amp-payment-google-button"
+  attrs: {
+    name: "is-test-mode"
+    value_regex_casei: "(false|true)"
+  }
   child_tags: {
     mandatory_num_child_tags: 1
     child_tag_name_oneof: "SCRIPT"

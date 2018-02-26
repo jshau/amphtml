@@ -37,10 +37,20 @@ FAIL
 |        }
 |      </script>
 |    </amp-payment-google-inline>
+|    <!-- Valid: with is-test-mode -->
+|    <amp-payment-google-inline
+|      data-payment-token-input-id="payment-token"
+|      is-test-mode="true">
+|      <script type="application/json">
+|        {
+|          "config": "example"
+|        }
+|      </script>
+|    </amp-payment-google-inline>
 |    <!-- Invalid: missing data-payment-token-input-id -->
 |    <amp-payment-google-inline>
 >>   ^~~~~~~~~
-amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:40:2 The mandatory attribute 'data-payment-token-input-id' is missing in tag 'amp-payment-google-inline'. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-inline) [AMP_TAG_PROBLEM]
+amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:50:2 The mandatory attribute 'data-payment-token-input-id' is missing in tag 'amp-payment-google-inline'. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-inline) [AMP_TAG_PROBLEM]
 |      <script type="application/json">
 |        {
 |          "config": "example"
@@ -50,7 +60,7 @@ amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:40:2
 |    <!-- Invalid: missing JSON config -->
 |    <amp-payment-google-inline
 >>   ^~~~~~~~~
-amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:48:2 Tag 'amp-payment-google-inline' must have 1 child tags - saw 0 child tags. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-inline) [AMP_TAG_PROBLEM]
+amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:58:2 Tag 'amp-payment-google-inline' must have 1 child tags - saw 0 child tags. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-inline) [AMP_TAG_PROBLEM]
 |      data-payment-token-input-id="payment-token">
 |    </amp-payment-google-inline>
 |  </body>

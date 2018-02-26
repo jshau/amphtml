@@ -61,6 +61,9 @@ let PaymentDataRequestDef;
  */
 export let PaymentData;
 
+/** @const {string} */
+const IS_TEST_MODE_ = 'is-test-mode';
+
 export class AmpPaymentGoogleBase extends AMP.BaseElement {
   /** @param {!AmpElement} element */
   constructor(element) {
@@ -103,6 +106,16 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
           'Failed to parse PaymentDataRequest. Is it valid JSON?', e);
     });
     return json;
+  }
+
+  /**
+   * @protected
+   * @return {!Promise<(?JsonObject|string|undefined)>} the response promise
+   */
+  initializePaymentClient_() {
+    const isTestMode = this.element.getAttribute(IS_TEST_MODE_) == 'true';
+    return this.viewer.sendMessageAwaitResponse(
+        'initializePaymentClient', {isTestMode});
   }
 
   /*
