@@ -15,6 +15,7 @@
  */
 
 
+import {base64EncodeFromBytes} from '../../../src/utils/base64';
 import {
   clearAutofillForElement,
   elementOrNullForFieldId,
@@ -23,10 +24,9 @@ import {
   setAutofillForElement,
   setFieldIdForElement,
 } from '../../../src/field';
+import {getCryptoRandomBytesArray} from '../../../src/utils/bytes';
 import {iterateCursor} from '../../../src/dom';
 import {listen} from '../../../src/event-helper';
-import {base64EncodeFromBytes} from '../../../src/utils/base64';
-import {getCryptoRandomBytesArray} from '../../../src/utils/bytes';
 
 /**
  * Request name to set a field's value.
