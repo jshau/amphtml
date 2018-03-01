@@ -15,6 +15,7 @@
  */
 
 
+import {Services} from '../../../src/services';
 import {base64EncodeFromBytes} from '../../../src/utils/base64';
 import {
   clearAutofillForElement,
@@ -24,6 +25,7 @@ import {
   setAutofillForElement,
   setFieldIdForElement,
 } from '../../../src/field';
+import {debounce} from '../../../src/utils/rate-limit';
 import {getCryptoRandomBytesArray} from '../../../src/utils/bytes';
 import {iterateCursor} from '../../../src/dom';
 import {listen} from '../../../src/event-helper';
@@ -48,13 +50,27 @@ export class FormEventHandler {
   /**
    * @param {!Window} win
    * @param {!./messaging/messaging.Messaging} messaging
+   * @param  {!../../../src/service/ampdoc-impl.AmpDoc} ampdoc
    */
-  constructor(win, messaging) {
+  constructor(win, messaging, ampdoc) {
     /** @const {!Window} */
     this.win = win;
 
     /** @const @private {!./messaging/messaging.Messaging} */
     this.messaging_ = messaging;
+
+    /** @private @const {!../../../src/service/resources-impl.Resources} */
+    this.resources_ = Services.resourcesForDoc(ampdoc);
+
+    /** @private {?Element} */
+    this.focusedElement_ = null;
+
+    /** @private @const {function()} */
+    this.debouncedHandleScrollEnd_ = debounce(
+        this.win, this.handleScrollEnd_.bind(this), 500);
+
+    /** @private {boolean} */
+    this.scrollInProgress_ = false;
 
     this.listenForFormEvents_();
     this.listenForViewerEvents_();
@@ -68,8 +84,12 @@ export class FormEventHandler {
    */
   listenForFormEvents_() {
     const handleEvent = this.handleEvent_.bind(this);
-    const options = {capture: false};
 
+    listen(
+        this.win.document, 'scroll', this.handleScrollEvent_.bind(this),
+        {capture: true});
+
+    const options = {capture: false};
     iterateCursor(this.win.document.querySelectorAll('form'), form => {
       iterateCursor(form.elements, element => {
         setFieldIdForElement(element);
@@ -89,30 +109,87 @@ export class FormEventHandler {
   }
 
   /**
+   * @private
+   */
+  handleScrollEvent_() {
+    if (!this.scrollInProgress_) {
+      this.handleScrollStart_();
+    }
+    this.debouncedHandleScrollEnd_();
+  }
+
+  /**
+   * @private
+   */
+  handleScrollStart_() {
+    this.scrollInProgress_ = true;
+    if (this.focusedElement_) {
+      this.sendScrollEvent_('fieldScrollStart');
+    }
+  }
+
+  /**
+   * @private
+   */
+  handleScrollEnd_() {
+    this.scrollInProgress_ = false;
+    if (this.focusedElement_) {
+      this.sendScrollEvent_('fieldScrollEnd');
+    }
+  }
+
+  /**
+   * @param {string} messageType
+   * @private
+   */
+  sendScrollEvent_(messageType) {
+    this.resources_.getElementLayoutBox(this.focusedElement_)
+        .then(fieldLayoutBox => {
+          const message = {
+            field: getFieldAsObject(this.focusedElement_),
+            fieldLayoutBox,
+          };
+          this.messaging_.sendRequest(messageType, message, false);
+        });
+  }
+
+  /**
    * Forwards a single form field event to the Viewer.
    * @param {!Event} e
    * @private
    */
   handleEvent_(e) {
-    const formFields = [];
-
-    // Remove any previous autofill styling if a user manually modifies a field.
-    if (e.type === 'input') {
-      e.target.classList.remove('i-amphtml-amp-viewer-autofill');
+    switch (e.type) {
+      case 'input':
+        // Remove any previous autofill styling if a user manually modifies a field.
+        e.target.classList.remove('i-amphtml-amp-viewer-autofill');
+        break;
+      case 'focus':
+        this.focusedElement_ = e.target;
+        break;
+      case 'blur':
+        if (e.target === this.focusedElement_) {
+          this.focusedElement_ = null;
+        }
+        break;
     }
 
+    const formFields = [];
     for (let i = 0; i < e.target.form.elements.length; i++) {
       formFields.push(getFieldAsObject(e.target.form.elements[i]));
     }
-    const message = {
-      field: getFieldAsObject(e.target),
-      form: {
-        fields: formFields,
-        id: e.target.form.id,
-      },
-    };
-
-    this.messaging_.sendRequest(e.type, message, false);
+    this.resources_.getElementLayoutBox(e.target)
+        .then(fieldLayoutBox => {
+          const message = {
+            field: getFieldAsObject(e.target),
+            form: {
+              fields: formFields,
+              id: e.target.form.id,
+            },
+            fieldLayoutBox,
+          };
+          this.messaging_.sendRequest(e.type, message, false);
+        });
   }
 
   /**
