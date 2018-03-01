@@ -70,7 +70,11 @@ describes.realWin('amp-list component', {
    */
   function expectFetchAndRender(fetched, rendered, opts = DEFAULT_LIST_OPTS) {
     const fetch = Promise.resolve(fetched);
+    listMock.expects('togglePlaceholder').withExactArgs(true).once();
+    listMock.expects('toggleLoading').withExactArgs(true).once();
     listMock.expects('fetch_').withExactArgs(opts.expr).returns(fetch).once();
+    listMock.expects('toggleLoading').withExactArgs(false).once();
+    listMock.expects('togglePlaceholder').withExactArgs(false).once();
 
     let itemsToRender = fetched;
     if (opts.singleItem) {
@@ -227,6 +231,25 @@ describes.realWin('amp-list component', {
     });
   });
 
+  it('should refetch if refresh action is called', () => {
+    const items = [{title: 'foo'}];
+    const foo = doc.createElement('div');
+    const rendered = expectFetchAndRender(items, [foo]);
+
+    return list.layoutCallback().then(() => rendered).then(() => {
+      expect(list.container_.contains(foo)).to.be.true;
+
+      const renderedAgain = expectFetchAndRender(items, [foo]);
+
+      list.executeAction({
+        method: 'refresh',
+        satisfiesTrust: () => true,
+      });
+      return renderedAgain;
+    });
+  });
+
+
   it('fetch should resolve if `src` is empty', () => {
     const spy = sandbox.spy(list, 'fetchList_');
     element.setAttribute('src', '');
@@ -237,7 +260,10 @@ describes.realWin('amp-list component', {
   });
 
   it('should fail to load b/c data array is absent', () => {
+    listMock.expects('togglePlaceholder').withExactArgs(true).once();
+    listMock.expects('toggleLoading').withExactArgs(true).once();
     listMock.expects('fetch_').returns(Promise.resolve({})).once();
+    listMock.expects('toggleLoading').withExactArgs(false).once();
     templatesMock.expects('findAndRenderTemplateArray').never();
     return expect(list.layoutCallback()).to.eventually.be
         .rejectedWith(/Response must contain an array/);
@@ -245,7 +271,10 @@ describes.realWin('amp-list component', {
 
   it('should fail to load b/c data single-item object is absent', () => {
     element.setAttribute('single-item', 'true');
+    listMock.expects('togglePlaceholder').withExactArgs(true).once();
+    listMock.expects('toggleLoading').withExactArgs(true).once();
     listMock.expects('fetch_').returns(Promise.resolve()).once();
+    listMock.expects('toggleLoading').withExactArgs(false).once();
     templatesMock.expects('findAndRenderTemplateArray').never();
     return expect(list.layoutCallback()).to.eventually.be
         .rejectedWith(/Response must contain an array or object/);
@@ -287,9 +316,11 @@ describes.realWin('amp-list component', {
   });
 
   it('should show placeholder on fetch failure (w/o fallback)', () => {
+    listMock.expects('toggleLoading').withExactArgs(true).once();
+    listMock.expects('togglePlaceholder').withExactArgs(true).once();
     // Stub fetch_() to fail.
     listMock.expects('fetch_').returns(Promise.reject()).once();
-    listMock.expects('togglePlaceholder').never();
+    listMock.expects('toggleLoading').withExactArgs(false).once();
     return list.layoutCallback().catch(() => {});
   });
 

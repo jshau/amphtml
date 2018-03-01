@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {ActionTrust} from '../../../src/action-trust';
 import {AmpEvents} from '../../../src/amp-events';
 import {Services} from '../../../src/services';
 import {
@@ -57,6 +58,10 @@ export class AmpList extends AMP.BaseElement {
 
     /** @const @private {string} */
     this.initialSrc_ = element.getAttribute('src');
+
+    this.registerAction('refresh', () => {
+      this.fetchList_();
+    }, ActionTrust.LOW);
   }
 
   /** @override */
@@ -88,19 +93,7 @@ export class AmpList extends AMP.BaseElement {
   layoutCallback() {
     this.layoutCompleted_ = true;
 
-    const fetch = this.fetchList_();
-    if (this.getFallback()) {
-      fetch.then(() => {
-        // Hide in case fallback was displayed for a previous fetch.
-        this.toggleFallbackInMutate_(false);
-      }, unusedError => {
-        // On fetch success, firstLayoutCompleted() hides placeholder.
-        // On fetch error, hide placeholder if fallback exists.
-        this.togglePlaceholder(false);
-        this.toggleFallbackInMutate_(true);
-      });
-    }
-    return fetch;
+    return this.fetchList_();
   }
 
   /** @override */
@@ -128,6 +121,11 @@ export class AmpList extends AMP.BaseElement {
       this.renderItems_(items);
       user().error(TAG, '[state] is deprecated, please use [src] instead.');
     }
+  }
+
+  /** @override */
+  doesReuseLoadingIndicator() {
+    return true;
   }
 
   /**
@@ -162,6 +160,12 @@ export class AmpList extends AMP.BaseElement {
     if (!this.element.getAttribute('src')) {
       return Promise.resolve();
     }
+    this.togglePlaceholder(true);
+    this.toggleLoading(true);
+    this.toggleFallbackInMutate_(false);
+    // Remove any previous items before the reload
+    removeChildren(dev().assertElement(this.container_));
+
     const itemsExpr = this.element.getAttribute('items') || 'items';
     return this.fetch_(itemsExpr).then(items => {
       if (this.element.hasAttribute('single-item')) {
@@ -182,7 +186,23 @@ export class AmpList extends AMP.BaseElement {
       return this.renderItems_(items);
     }, error => {
       throw user().createError('Error fetching amp-list', error);
-    });
+    })
+        .then(() => {
+          if (this.getFallback()) {
+            // Hide in case fallback was displayed for a previous fetch.
+            this.toggleFallbackInMutate_(false);
+          }
+          this.togglePlaceholder(false);
+          this.toggleLoading(false);
+        }, error => {
+          this.toggleLoading(false);
+          if (this.getFallback()) {
+            this.toggleFallbackInMutate_(true);
+            this.togglePlaceholder(false);
+          } else {
+            throw error;
+          }
+        });
   }
 
   /**
@@ -256,6 +276,7 @@ export class AmpList extends AMP.BaseElement {
     }
     return batchFetchJsonFor(ampdoc, this.element, itemsExpr, policy);
   }
+
 }
 
 
