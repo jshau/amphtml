@@ -201,7 +201,7 @@ export class AmpViewerIntegration {
    * @private
    */
   initFormEventHandler_(messaging) {
-    new FormEventHandler(this.win, messaging);
+    new FormEventHandler(this.win, messaging, getAmpdoc(this.win.document));
   }
 }
 
