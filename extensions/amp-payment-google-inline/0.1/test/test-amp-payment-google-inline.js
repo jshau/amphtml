@@ -19,7 +19,10 @@ import {AmpFormService} from '../../../../extensions/amp-form/0.1/amp-form';
 import {mockServiceForDoc} from '../../../../testing/test-helper';
 
 /** @const {string} */
-const IFRAME_URL = 'http://example.com';
+const IFRAME_URL = 'http://example.com/somesubpath';
+
+/** @const {string} */
+const IFRAME_URL_ORIGIN = 'http://example.com';
 
 /** @const {string} */
 const SUBMIT_BUTTON_ID = 'submit-button';
@@ -54,7 +57,7 @@ describes.realWin('amp-payment-google-inline', {
 
     iframeMock = mockServiceForDoc(
         env.sandbox, env.ampdoc, 'payment-google-inline',
-        ['sendIframeMessageAwaitResponse']);
+        ['sendIframeMessage', 'sendIframeMessageAwaitResponse']);
 
     xhrMock = mockServiceForDoc(env.sandbox, env.ampdoc, 'xhr', [
       'fetch',
@@ -117,7 +120,7 @@ describes.realWin('amp-payment-google-inline', {
       const iframes = gPayInline.getElementsByTagName('iframe');
       expect(iframes.length).to.equal(1);
       iframeMock.sendIframeMessageAwaitResponse
-          .withArgs(iframes[0], 'loadDefaultPaymentData')
+          .withArgs(iframes[0], IFRAME_URL_ORIGIN, 'getSelectedPaymentData')
           .returns(Promise.resolve({
             paymentMethodToken: {
               token: PAYMENT_TOKEN,
@@ -153,6 +156,30 @@ describes.realWin('amp-payment-google-inline', {
       button.click();
 
       return formSubmitted;
+    });
+  });
+
+  it('should call loadPaymentData if requested by iframe', function() {
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('getInlinePaymentIframeUrl', {})
+        .returns(Promise.resolve(IFRAME_URL));
+    viewerMock.sendMessageAwaitResponse.withArgs('loadPaymentData', {})
+        .returns(
+            Promise.resolve({data: {paymentMethodToken: PAYMENT_TOKEN}}));
+
+    return getAmpPaymentGoogleInline().then(gPayInline => {
+      const iframes = gPayInline.getElementsByTagName('iframe');
+      expect(iframes.length).to.equal(1);
+      iframeMock.sendIframeMessage
+          .withArgs(
+              iframes[0], IFRAME_URL_ORIGIN, 'loadPaymentData',
+              {data: {paymentMethodToken: PAYMENT_TOKEN}})
+          .returns();
+
+      window.postMessage({
+        message: 'loadPaymentData',
+        data: {},
+      }, '*');
     });
   });
 

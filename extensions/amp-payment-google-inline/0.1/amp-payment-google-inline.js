@@ -8,6 +8,7 @@ import {closestByTag} from '../../../src/dom';
 import {formOrNullForElement} from '../../../src/form';
 import {getServiceForDoc} from '../../../src/service';
 import {map} from '../../../src/utils/object';
+import {parseUrl} from '../../../src/url';
 
 /** @const {string} */
 const TAG = 'amp-payment-google-inline';
@@ -26,6 +27,9 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     this.iframe_ = null;
 
     this.iframeService_ = getServiceForDoc(this.win.document, SERVICE_TAG);
+
+    /** @private {string} */
+    this.iframeOrigin_ = '';
   }
 
   /** @override */
@@ -35,8 +39,8 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     this.viewer.whenFirstVisible()
         .then(() => super.initializePaymentClient_())
         .then(() => {
-          return this.viewer
-              .sendMessageAwaitResponse('getInlinePaymentIframeUrl', {});
+          return this.viewer.sendMessageAwaitResponse(
+              'getInlinePaymentIframeUrl', this.getPaymentDataRequest_());
         })
         .then(data => this.render_(data));
   }
@@ -60,6 +64,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
       this.iframe_.src = iframeSrc;
       this.iframe_.classList.add('google-pay-iframe');
       this.element.appendChild(this.iframe_);
+      this.iframeOrigin_ = parseUrl(iframeSrc).origin;
     }
 
     const enclosingForm = closestByTag(this.element, 'form');
@@ -89,11 +94,11 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
   onMessage_(event) {
     if (event.data.message === 'loadPaymentData') {
       this.viewer
-          .sendMessageAwaitResponse('loadPaymentData',
-              this.getPaymentDataRequest_())
+          .sendMessageAwaitResponse(
+              'loadPaymentData', this.getPaymentDataRequest_())
           .then(data => {
-            this.iframeService_
-                .sendIframeMessage(this.iframe_, 'loadedPaymentData', data);
+            this.iframeService_.sendIframeMessage(
+                this.iframe_, this.iframeOrigin_, 'loadPaymentData', data);
             this.getPaymentTokenInput_().value = data.paymentMethodToken.token;
           });
     }
@@ -120,7 +125,8 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     // submitting the form. This will happen if the user decides to use the
     // default instrument shown in the inline widget.
     return this.iframeService_
-        .sendIframeMessageAwaitResponse(this.iframe_, 'loadDefaultPaymentData')
+        .sendIframeMessageAwaitResponse(
+            this.iframe_, this.iframeOrigin_, 'getSelectedPaymentData')
         .then(data => {
           input.value = data.paymentMethodToken.token;
         });
@@ -210,22 +216,24 @@ export class AmpPaymentGoogleInlineService {
    * the response payload.
    *
    * @param {HTMLIFrameElement} iframe
+   * @param {string} iframeOrigin
    * @param {string} messageName
    * @param {!Object} [messagePayload]
    * @returns {!Promise}
    */
-  sendIframeMessageAwaitResponse(iframe, messageName, messagePayload) {
+  sendIframeMessageAwaitResponse(
+      iframe, iframeOrigin, messageName, messagePayload) {
     const messageId = this.nextMessageId_++;
     const promise = new Promise(resolve => {
       this.requestData_[messageId] = {
         resolve,
         messageName,
-        origin: iframe.contentWindow.origin,
+        origin: iframeOrigin,
       };
     });
 
     this.sendIframeMessageWithId_(
-        iframe, messageName, messageId, messagePayload);
+        iframe, iframeOrigin, messageName, messageId, messagePayload);
 
     return promise;
   }
@@ -234,29 +242,36 @@ export class AmpPaymentGoogleInlineService {
    * Send a message to the widget iframe without waiting for a response.
    *
    * @param {HTMLIFrameElement} iframe
+   * @param {string} iframeOrigin
    * @param {string} messageName
    * @param {!Object} [messagePayload]
    */
-  sendIframeMessage(iframe, messageName, messagePayload) {
-    this.sendIframeMessageInternal_(iframe, {
-      message: messageName,
-    }, messagePayload);
+  sendIframeMessage(iframe, iframeOrigin, messageName, messagePayload) {
+    this.sendIframeMessageInternal_(
+        iframe, iframeOrigin, {
+          message: messageName,
+        },
+        messagePayload);
   }
 
   /**
    * Send a message to the widget iframe without waiting for a response.
    *
    * @param {HTMLIFrameElement} iframe
+   * @param {string} iframeOrigin
    * @param {string} messageName
    * @param {number} messageId
    * @param {!Object} [messagePayload]
    * @private
    */
-  sendIframeMessageWithId_(iframe, messageName, messageId, messagePayload) {
-    this.sendIframeMessageInternal_(iframe, {
-      message: messageName,
-      messageId,
-    }, messagePayload);
+  sendIframeMessageWithId_(
+      iframe, iframeOrigin, messageName, messageId, messagePayload) {
+    this.sendIframeMessageInternal_(
+        iframe, iframeOrigin, {
+          message: messageName,
+          messageId,
+        },
+        messagePayload);
   }
 
 
@@ -264,16 +279,17 @@ export class AmpPaymentGoogleInlineService {
    * Send a message to the widget iframe without waiting for a response.
    *
    * @param {HTMLIFrameElement} iframe
+   * @param {string} iframeOrigin
    * @param {{ message: string, messageId: ?number }} message
    * @param {!Object} [messagePayload]
    * @private
    */
-  sendIframeMessageInternal_(iframe, message, messagePayload) {
+  sendIframeMessageInternal_(iframe, iframeOrigin, message, messagePayload) {
     if (messagePayload) {
       message.data = messagePayload;
     }
 
-    iframe.contentWindow.postMessage(message, iframe.contentWindow.origin);
+    iframe.contentWindow.postMessage(message, iframeOrigin);
   }
 }
 
@@ -281,3 +297,4 @@ AMP.extension(TAG, '0.1', function(AMP) {
   AMP.registerServiceForDoc(SERVICE_TAG, AmpPaymentGoogleInlineService);
   AMP.registerElement(TAG, AmpPaymentGoogleInline, CSS);
 });
+
