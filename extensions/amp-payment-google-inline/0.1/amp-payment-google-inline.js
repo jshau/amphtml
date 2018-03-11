@@ -2,9 +2,12 @@
  * @fileoverview Tests for the amp-payment-google-inline extension.
  */
 
+import {ActionTrust} from '../../../src/action-trust';
 import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {CSS} from '../../../build/amp-payment-google-inline-0.1.css';
+import {Services} from '../../../src/services';
 import {closestByTag} from '../../../src/dom';
+import {createCustomEvent} from '../../../src/event-helper';
 import {formOrNullForElement} from '../../../src/form';
 import {getServiceForDoc} from '../../../src/service';
 import {map} from '../../../src/utils/object';
@@ -18,6 +21,9 @@ const SERVICE_TAG = 'payment-google-inline';
 
 /** @const {string} */
 const PAYMENT_TOKEN_INPUT_ID_ATTRIBUTE_ = 'data-payment-token-input-id';
+
+/** @const {string} */
+const PAYMENT_READY_STATUS_CHANGED = 'paymentReadyStatusChanged';
 
 class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
   /** @param {!AmpElement} element */
@@ -35,6 +41,8 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
   /** @override */
   buildCallback() {
     super.buildCallback();
+
+    this.actions_ = Services.actionServiceForDoc(this.element);
 
     this.viewer.whenFirstVisible()
         .then(() => super.initializePaymentClient_())
@@ -101,6 +109,11 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
                 this.iframe_, this.iframeOrigin_, 'loadPaymentData', data);
             this.getPaymentTokenInput_().value = data.paymentMethodToken.token;
           });
+    } else if (event.data.message === 'paymentReadyStatusChanged') {
+      const name = PAYMENT_READY_STATUS_CHANGED;
+      const customEvent =
+          createCustomEvent(this.win, `${TAG}.${name}`, event.data.data);
+      this.actions_.trigger(this.element, name, customEvent, ActionTrust.HIGH);
     }
   }
 
