@@ -50,8 +50,8 @@ tags: {  # <amp-payment-google-inline>
   html_format: AMP
   html_format: EXPERIMENTAL
   tag_name: "AMP-PAYMENT-GOOGLE-INLINE"
-  spec_name: "amp-payment-google-inline"
   requires_extension: "amp-payment-google-inline"
+  mandatory_ancestor: "FORM [method=POST]"
   attrs: {
     name: "data-payment-token-input-id"
     mandatory: true

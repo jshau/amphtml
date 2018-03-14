@@ -25,36 +25,58 @@
   <script async src="https://cdn.ampproject.org/v0.js"></script>
   <script async custom-element="amp-payment-google-inline"
       src="https://cdn.ampproject.org/v0/amp-payment-google-inline-0.1.js"></script>
+  <script async custom-element="amp-form"
+      src="https://cdn.ampproject.org/v0/amp-form-0.1.js"></script>
 </head>
 <body>
   <!-- Valid -->
-  <amp-payment-google-inline
-    data-payment-token-input-id="payment-token">
-    <script type="application/json">
-      {
-        "config": "example"
-      }
-    </script>
-  </amp-payment-google-inline>
+  <form method="post"
+    action-xhr="www.example.com"
+    target="_top">
+    <amp-payment-google-inline
+      data-payment-token-input-id="payment-token">
+      <script type="application/json">
+        {
+          "config": "example"
+        }
+      </script>
+    </amp-payment-google-inline>
+  </form>
   <!-- Valid: with is-test-mode -->
-  <amp-payment-google-inline
-    data-payment-token-input-id="payment-token"
-    is-test-mode="true">
-    <script type="application/json">
-      {
-        "config": "example"
-      }
-    </script>
-  </amp-payment-google-inline>
+  <form method="post"
+    action-xhr="www.example.com"
+    target="_top">
+    <amp-payment-google-inline
+      data-payment-token-input-id="payment-token"
+      is-test-mode="true">
+      <script type="application/json">
+        {
+          "config": "example"
+        }
+      </script>
+    </amp-payment-google-inline>
+  </form>
   <!-- Invalid: missing data-payment-token-input-id -->
-  <amp-payment-google-inline>
-    <script type="application/json">
-      {
-        "config": "example"
-      }
-    </script>
-  </amp-payment-google-inline>
+  <form method="post"
+    action-xhr="www.example.com"
+    target="_top">
+    <amp-payment-google-inline>
+      <script type="application/json">
+        {
+          "config": "example"
+        }
+      </script>
+    </amp-payment-google-inline>
+  </form>
   <!-- Invalid: missing JSON config -->
+  <form method="post"
+    action-xhr="www.example.com"
+    target="_top">
+    <amp-payment-google-inline
+      data-payment-token-input-id="payment-token">
+    </amp-payment-google-inline>
+  </form>
+  <!-- Invalid: missing enclosing amp form -->
   <amp-payment-google-inline
     data-payment-token-input-id="payment-token">
   </amp-payment-google-inline>
