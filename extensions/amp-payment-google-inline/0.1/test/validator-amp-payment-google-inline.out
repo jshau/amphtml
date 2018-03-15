@@ -35,7 +35,7 @@ FAIL
 |      action-xhr="www.example.com"
 |      target="_top">
 |      <amp-payment-google-inline
-|        data-payment-token-input-id="payment-token">
+|        data-payment-data-input-id="payment-data">
 |        <script type="application/json">
 |          {
 |            "config": "example"
@@ -48,7 +48,7 @@ FAIL
 |      action-xhr="www.example.com"
 |      target="_top">
 |      <amp-payment-google-inline
-|        data-payment-token-input-id="payment-token"
+|        data-payment-data-input-id="payment-data"
 |        is-test-mode="true">
 |        <script type="application/json">
 |          {
@@ -57,13 +57,13 @@ FAIL
 |        </script>
 |      </amp-payment-google-inline>
 |    </form>
-|    <!-- Invalid: missing data-payment-token-input-id -->
+|    <!-- Invalid: missing data-payment-data-input-id -->
 |    <form method="post"
 |      action-xhr="www.example.com"
 |      target="_top">
 |      <amp-payment-google-inline>
 >>     ^~~~~~~~~
-amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:63:4 The mandatory attribute 'data-payment-token-input-id' is missing in tag 'amp-payment-google-inline'. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-inline) [AMP_TAG_PROBLEM]
+amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:63:4 The mandatory attribute 'data-payment-data-input-id' is missing in tag 'amp-payment-google-inline'. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-inline) [AMP_TAG_PROBLEM]
 |        <script type="application/json">
 |          {
 |            "config": "example"
@@ -78,14 +78,14 @@ amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:63:4
 |      <amp-payment-google-inline
 >>     ^~~~~~~~~
 amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:75:4 Tag 'amp-payment-google-inline' must have 1 child tags - saw 0 child tags. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-inline) [AMP_TAG_PROBLEM]
-|        data-payment-token-input-id="payment-token">
+|        data-payment-data-input-id="payment-data">
 |      </amp-payment-google-inline>
 |    </form>
 |    <!-- Invalid: missing enclosing amp form -->
 |    <amp-payment-google-inline
 >>   ^~~~~~~~~
 amp-payment-google-inline/0.1/test/validator-amp-payment-google-inline.html:80:2 The tag 'amp-payment-google-inline' may only appear as a descendant of tag 'form [method=post]'. (see https://www.ampproject.org/docs/reference/components/amp-payment-google-inline) [AMP_TAG_PROBLEM]
-|      data-payment-token-input-id="payment-token">
+|      data-payment-data-input-id="payment-data">
 |    </amp-payment-google-inline>
 |  </body>
 |  </html>

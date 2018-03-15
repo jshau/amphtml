@@ -34,7 +34,7 @@
     action-xhr="www.example.com"
     target="_top">
     <amp-payment-google-inline
-      data-payment-token-input-id="payment-token">
+      data-payment-data-input-id="payment-data">
       <script type="application/json">
         {
           "config": "example"
@@ -47,7 +47,7 @@
     action-xhr="www.example.com"
     target="_top">
     <amp-payment-google-inline
-      data-payment-token-input-id="payment-token"
+      data-payment-data-input-id="payment-data"
       is-test-mode="true">
       <script type="application/json">
         {
@@ -56,7 +56,7 @@
       </script>
     </amp-payment-google-inline>
   </form>
-  <!-- Invalid: missing data-payment-token-input-id -->
+  <!-- Invalid: missing data-payment-data-input-id -->
   <form method="post"
     action-xhr="www.example.com"
     target="_top">
@@ -73,12 +73,12 @@
     action-xhr="www.example.com"
     target="_top">
     <amp-payment-google-inline
-      data-payment-token-input-id="payment-token">
+      data-payment-data-input-id="payment-data">
     </amp-payment-google-inline>
   </form>
   <!-- Invalid: missing enclosing amp form -->
   <amp-payment-google-inline
-    data-payment-token-input-id="payment-token">
+    data-payment-data-input-id="payment-data">
   </amp-payment-google-inline>
 </body>
 </html>

@@ -53,7 +53,7 @@ tags: {  # <amp-payment-google-inline>
   requires_extension: "amp-payment-google-inline"
   mandatory_ancestor: "FORM [method=POST]"
   attrs: {
-    name: "data-payment-token-input-id"
+    name: "data-payment-data-input-id"
     mandatory: true
   }
   attrs: {

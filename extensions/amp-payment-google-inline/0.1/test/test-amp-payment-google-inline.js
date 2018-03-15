@@ -28,7 +28,7 @@ const IFRAME_URL_ORIGIN = 'http://example.com';
 const SUBMIT_BUTTON_ID = 'submit-button';
 
 /** @const {string} */
-const PAYMENT_TOKEN_INPUT_ID = 'payment-token';
+const PAYMENT_DATA_INPUT_ID = 'payment-data';
 
 /** @const {string} */
 const PAYMENT_TOKEN = 'fake-payment-token';
@@ -111,7 +111,7 @@ describes.realWin('amp-payment-google-inline', {
     });
   });
 
-  it('submits the payment token along with the form', () => {
+  it('submits the payment data along with the form', () => {
     viewerMock.sendMessageAwaitResponse
         .withArgs('getInlinePaymentIframeUrl', {})
         .returns(Promise.resolve(IFRAME_URL));
@@ -128,7 +128,7 @@ describes.realWin('amp-payment-google-inline', {
           }));
 
       // Before the form is submitted, the hidden input is present, but empty.
-      const input = doc.getElementById(PAYMENT_TOKEN_INPUT_ID);
+      const input = doc.getElementById(PAYMENT_DATA_INPUT_ID);
       expect(input.value).to.equal('');
 
       const formSubmitted = new Promise((resolve, reject) => {
@@ -136,10 +136,13 @@ describes.realWin('amp-payment-google-inline', {
           // Without this try-catch block, the nested promise swallows up any
           // failed expectations and the test times out instead of failing.
           try {
-            // The token is present in the form when it is submitted.
-            expect(input.value).to.equal(PAYMENT_TOKEN);
-            expect(Array.from(request.body.entries()))
-                .to.deep.include([PAYMENT_TOKEN_INPUT_ID, PAYMENT_TOKEN]);
+            // The data is present in the form when it is submitted.
+            const data =
+                '{"paymentMethodToken":{"token":"' + PAYMENT_TOKEN + '"}}';
+            expect(input.value).to.equal(data);
+            expect(Array.from(request.body.entries())).to.deep.include([
+              PAYMENT_DATA_INPUT_ID, data
+            ]);
             resolve();
           } catch (e) {
             reject(e);
@@ -194,13 +197,13 @@ describes.realWin('amp-payment-google-inline', {
     form.appendChild(button);
 
     const input = doc.createElement('input');
-    input.id = PAYMENT_TOKEN_INPUT_ID;
+    input.id = PAYMENT_DATA_INPUT_ID;
     input.setAttribute('type', 'hidden');
-    input.setAttribute('name', PAYMENT_TOKEN_INPUT_ID);
+    input.setAttribute('name', PAYMENT_DATA_INPUT_ID);
     form.appendChild(input);
 
     const inline = doc.createElement('amp-payment-google-inline');
-    inline.setAttribute('data-payment-token-input-id', PAYMENT_TOKEN_INPUT_ID);
+    inline.setAttribute('data-payment-data-input-id', PAYMENT_DATA_INPUT_ID);
     inline.setAttribute('is-test-mode', opt_isTestMode);
     form.appendChild(inline);
 

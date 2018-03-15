@@ -20,7 +20,7 @@ const TAG = 'amp-payment-google-inline';
 const SERVICE_TAG = 'payment-google-inline';
 
 /** @const {string} */
-const PAYMENT_TOKEN_INPUT_ID_ATTRIBUTE_ = 'data-payment-token-input-id';
+const PAYMENT_DATA_INPUT_ID_ATTRIBUTE_ = 'data-payment-data-input-id';
 
 /** @const {string} */
 const PAYMENT_READY_STATUS_CHANGED = 'paymentReadyStatusChanged';
@@ -141,7 +141,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
         .sendIframeMessageAwaitResponse(
             this.iframe_, this.iframeOrigin_, 'getSelectedPaymentData')
         .then(data => {
-          input.value = data.paymentMethodToken.token;
+          input.value = JSON.stringify(data);
         });
   }
 
@@ -151,7 +151,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
    */
   getPaymentTokenInput_() {
     const paymentTokenInputId = this.element.getAttribute(
-        PAYMENT_TOKEN_INPUT_ID_ATTRIBUTE_);
+        PAYMENT_DATA_INPUT_ID_ATTRIBUTE_);
 
     const input = this.win.document.getElementById(
         paymentTokenInputId);
@@ -164,7 +164,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     if (input.nodeName !== 'INPUT') {
       this.user().error(
           this.getTag_(),
-          PAYMENT_TOKEN_INPUT_ID_ATTRIBUTE_ + ' must specify the ID of an ' +
+          PAYMENT_DATA_INPUT_ID_ATTRIBUTE_ + ' must specify the ID of an ' +
           '<input> element; #' + paymentTokenInputId + ' is a ' +
           input.nodeName + '.');
     }
