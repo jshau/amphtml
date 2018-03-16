@@ -104,11 +104,16 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
       this.viewer
           .sendMessageAwaitResponse(
               'loadPaymentData', this.getPaymentDataRequest_())
-          .then(data => {
-            this.iframeService_.sendIframeMessage(
-                this.iframe_, this.iframeOrigin_, 'loadPaymentData', data);
-            this.getPaymentTokenInput_().value = data.paymentMethodToken.token;
-          });
+          .then(
+              data => {
+                this.iframeService_.sendIframeMessage(
+                    this.iframe_, this.iframeOrigin_, 'loadPaymentData', data);
+                this.getPaymentTokenInput_().value =
+                    data.paymentMethodToken.token;
+              },
+              error => {this.user().error(
+                  this.getTag_(),
+                  'Error while calling loadPaymentData: ' + error)});
     } else if (event.data.message === 'paymentReadyStatusChanged') {
       const name = PAYMENT_READY_STATUS_CHANGED;
       const customEvent =
@@ -140,9 +145,13 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     return this.iframeService_
         .sendIframeMessageAwaitResponse(
             this.iframe_, this.iframeOrigin_, 'getSelectedPaymentData')
-        .then(data => {
-          input.value = JSON.stringify(data);
-        });
+        .then(
+            data => {
+              input.value = JSON.stringify(data);
+            },
+            error => {this.user().error(
+                this.getTag_(),
+                'Error on submission: ' + error)});
   }
 
   /**
@@ -186,6 +195,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
  *
  * @typedef {{
  *   resolve: !Function,
+ *   reject: !Function,
  *   origin: string,
  *   messageName: string,
  * }}
@@ -215,7 +225,11 @@ export class AmpPaymentGoogleInlineService {
       const request = service.requestData_[event.data.messageId];
       if (request && event.origin === request.origin
                   && event.data.message === request.messageName) {
-        request.resolve(event.data.data);
+        if (event.data.error) {
+          request.reject(event.data.error);
+        } else {
+          request.resolve(event.data.data);
+        }
       }
     });
   }
@@ -237,9 +251,10 @@ export class AmpPaymentGoogleInlineService {
   sendIframeMessageAwaitResponse(
       iframe, iframeOrigin, messageName, messagePayload) {
     const messageId = this.nextMessageId_++;
-    const promise = new Promise(resolve => {
+    const promise = new Promise((resolve, reject) => {
       this.requestData_[messageId] = {
         resolve,
+        reject,
         messageName,
         origin: iframeOrigin,
       };

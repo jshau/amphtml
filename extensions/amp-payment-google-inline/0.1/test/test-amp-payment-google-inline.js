@@ -162,6 +162,48 @@ describes.realWin('amp-payment-google-inline', {
     });
   });
 
+  it('should not set payment data if submit fails', () => {
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('getInlinePaymentIframeUrl', {})
+        .returns(Promise.resolve(IFRAME_URL));
+
+    return getAmpPaymentGoogleInline().then(gPayInline => {
+      const iframes = gPayInline.getElementsByTagName('iframe');
+      expect(iframes.length).to.equal(1);
+      iframeMock.sendIframeMessageAwaitResponse
+          .withArgs(iframes[0], IFRAME_URL_ORIGIN, 'getSelectedPaymentData')
+          .returns(Promise.reject('getSelectedPaymentData fail'));
+
+      // Before the form is submitted, the hidden input is present, but empty.
+      const input = doc.getElementById(PAYMENT_DATA_INPUT_ID);
+      expect(input.value).to.equal('');
+
+      const formSubmitted = new Promise((resolve, reject) => {
+        xhrMock.fetch.callsFake((url, request) => {
+          // Without this try-catch block, the nested promise swallows up any
+          // failed expectations and the test times out instead of failing.
+          try {
+            // Input value should still be empty as submit failed
+            expect(input.value).to.equal('');
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+
+          // Minimal mocked FetchResponse.
+          return {
+            json: () => Promise.resolve('{}'),
+          };
+        });
+      });
+
+      const button = doc.getElementById(SUBMIT_BUTTON_ID);
+      button.click();
+
+      return formSubmitted;
+    });
+  });
+
   it('should call loadPaymentData if requested by iframe', function() {
     viewerMock.sendMessageAwaitResponse
         .withArgs('getInlinePaymentIframeUrl', {})
@@ -178,6 +220,29 @@ describes.realWin('amp-payment-google-inline', {
               iframes[0], IFRAME_URL_ORIGIN, 'loadPaymentData',
               {data: {paymentMethodToken: PAYMENT_TOKEN}})
           .returns();
+
+      window.postMessage({
+        message: 'loadPaymentData',
+        data: {},
+      }, '*');
+    });
+  });
+
+  it('should not call loadPaymentData if failed', function() {
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('getInlinePaymentIframeUrl', {})
+        .returns(Promise.resolve(IFRAME_URL));
+    viewerMock.sendMessageAwaitResponse.withArgs('loadPaymentData', {})
+        .throws('loadPaymentData fail');
+
+    return getAmpPaymentGoogleInline().then(gPayInline => {
+      const iframes = gPayInline.getElementsByTagName('iframe');
+      expect(iframes.length).to.equal(1);
+      iframeMock.sendIframeMessage
+          .withArgs(
+              iframes[0], IFRAME_URL_ORIGIN, 'loadPaymentData',
+              sinon.match.any)
+          .throws('Should not call with this argument');
 
       window.postMessage({
         message: 'loadPaymentData',
