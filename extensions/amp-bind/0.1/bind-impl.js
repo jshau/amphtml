@@ -169,10 +169,8 @@ export class Bind {
     /** @private {Promise} */
     this.setStatePromise_ = null;
 
-    // Expose for testing on dev.
-    if (getMode().development || getMode().localDev) {
-      AMP.printState = this.printState_.bind(this);
-    }
+    // Expose for debugging in the console.
+    AMP.printState = this.printState_.bind(this);
   }
 
   /** @override */
