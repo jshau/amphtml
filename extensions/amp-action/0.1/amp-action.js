@@ -1,3 +1,4 @@
+import {ActionTrust} from '../../../src/action-trust';
 import {Services} from '../../../src/services';
 import {dev, user} from '../../../src/log';
 import {dict} from '../../../src/utils/object';
@@ -30,6 +31,21 @@ export class ActionService {
 
     /** @private @const {!../../../src/service/viewer-impl.Viewer} */
     this.viewer_ = Services.viewerForDoc(ampdoc);
+
+    Services.actionServiceForDoc(ampdoc).installActionHandler(
+      this.actionElement_, this.actionHandler_.bind(this), ActionTrust.HIGH);
+  }
+
+  /**
+   * @param {!../../../src/service/action-impl.ActionInvocation} invocation
+   * @return {?Promise}
+   * @private
+   */
+  actionHandler_(invocation) {
+    if (invocation.method == 'orderCompleted' && !!invocation.args) {
+      this.viewer_.sendMessage('orderCompleted', invocation.args);
+    }
+    return null;
   }
 
   /**

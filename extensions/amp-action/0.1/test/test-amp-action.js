@@ -1,4 +1,5 @@
 import {ActionService} from '../amp-action';
+import {ActionInvocation} from '../../../../src/service/action-impl';
 
 describes.fakeWin('ActionService', {
   amp: true,
@@ -46,5 +47,34 @@ describes.fakeWin('ActionService', {
     expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
       'config': config,
     });
+  });
+
+  it('should send orderCompleted to the viewer', () => {
+    const config = {
+      'providerId': 'foo-bar',
+    };
+    element.textContent = JSON.stringify(config);
+    const service = new ActionService(ampdoc);
+    const sendMessageStub = sandbox.stub(service.viewer_, 'sendMessage');
+    const order = {
+      'foo': 'bar',
+    };
+    const invocation = new ActionInvocation(element, 'orderCompleted', order);
+    service.actionHandler_(invocation);
+    expect(sendMessageStub).to.be.calledOnce;
+    expect(sendMessageStub.firstCall.args[0]).to.equal('orderCompleted');
+    expect(sendMessageStub.firstCall.args[1]).to.deep.equal(order);
+  });
+
+  it('should fail to send orderCompleted if order is missing', () => {
+    const config = {
+      'providerId': 'foo-bar',
+    };
+    element.textContent = JSON.stringify(config);
+    const service = new ActionService(ampdoc);
+    const sendMessageStub = sandbox.stub(service.viewer_, 'sendMessage');
+    const invocation = new ActionInvocation(element, 'orderCompleted');
+    service.actionHandler_(invocation);
+    expect(sendMessageStub).to.not.be.called;
   });
 });
