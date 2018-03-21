@@ -143,17 +143,3 @@ export function omit(o, props) {
     return acc;
   }, {});
 }
-
-/**
- * @param {!Object} o An object to pick properties from
- * @param {!Array<string>} props A list of properties to use from the Object
- * @return {!Object} An object with just the given properties from the original object
- */
-export function pick(o, props) {
-  return Object.keys(o).reduce((acc, key) => {
-    if (props.includes(key)) {
-      acc[key] = o[key];
-    }
-    return acc;
-  }, {});
-}

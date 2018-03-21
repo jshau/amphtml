@@ -19,7 +19,6 @@ import {Services} from '../services';
 import {calculateEntryPointScriptUrl} from '../service/extension-location';
 import {dev} from '../log';
 import {getMode} from '../mode';
-
 import {getService, registerServiceBuilder} from '../service';
 
 const TAG = 'web-worker';
@@ -83,18 +82,11 @@ class AmpWorker {
     if (getMode().test && win.testLocation) {
       loc = win.testLocation;
     }
-    let url;
-    if (getMode().localDev) {
-      // This is a hack to make local development work correctly with our AMP action samples.
-      const ampJsUrl = this.win_.document.querySelector(
-          'script[src$="/amp.js"]').src;
-      url = ampJsUrl.replace('/amp.js', '/ww.max.js');
-    } else {
-      const isTest = getMode().test;
-      const useRtvVersion = !isTest;
-      url = calculateEntryPointScriptUrl(
-          loc, 'ww', isTest, useRtvVersion);
-    }
+    // Use RTV to make sure we fetch prod/canary/experiment correctly.
+    const useLocal = getMode().localDev || getMode().test;
+    const useRtvVersion = !useLocal;
+    const url = calculateEntryPointScriptUrl(
+        loc, 'ww', useLocal, useRtvVersion);
     dev().fine(TAG, 'Fetching web worker from', url);
 
     /** @private {Worker} */
@@ -149,7 +141,7 @@ class AmpWorker {
 
         /** @type {ToWorkerMessageDef} */
         const message = {method, args, scope, id};
-        this.worker_./*OK*/ postMessage(message);
+        this.worker_./*OK*/postMessage(message);
       });
     });
   }
@@ -166,16 +158,12 @@ class AmpWorker {
 
     const message = this.messages_[id];
     if (!message) {
-      dev().error(
-          TAG,
-          `Received unexpected message (${method}, ${id}) ` +
-              'from worker.');
+      dev().error(TAG, `Received unexpected message (${method}, ${id}) ` +
+          'from worker.');
       return;
     }
-    dev().assert(
-        method == message.method,
-        'Received mismatched method ' +
-            `(${method}, ${id}), expected ${message.method}.`);
+    dev().assert(method == message.method, 'Received mismatched method ' +
+        `(${method}, ${id}), expected ${message.method}.`);
 
     message.resolve(returnValue);
 

@@ -149,13 +149,6 @@ describes.realWin('amp-ad-network-doubleclick-impl', realWinConfig, env => {
       impl = new AmpAdNetworkDoubleclickImpl(element);
       expect(impl.isValidElement()).to.be.true;
     });
-    it('should not be valid if remote.html present', () => {
-      const meta = doc.createElement('meta');
-      meta.setAttribute('name', 'amp-3p-iframe-src');
-      doc.head.appendChild(meta);
-      impl = new AmpAdNetworkDoubleclickImpl(element);
-      expect(impl.isValidElement()).to.be.false;
-    });
   });
 
 
@@ -242,8 +235,9 @@ describes.realWin('amp-ad-network-doubleclick-impl', realWinConfig, env => {
           return !!this.get(name);
         },
       });
-      expect(impl.nameframeExperimentConfig.instantLoad).to.be.true;
-      expect(impl.nameframeExperimentConfig.writeInBody).to.be.false;
+      const {instantLoad, writeInBody} = impl.getNameFrameExperimentConfig();
+      expect(instantLoad).to.be.true;
+      expect(writeInBody).to.be.false;
     });
 
     it('should specify nameframe loading behavior; two args', () => {
@@ -256,8 +250,9 @@ describes.realWin('amp-ad-network-doubleclick-impl', realWinConfig, env => {
           return !!this.get(name);
         },
       });
-      expect(impl.nameframeExperimentConfig.instantLoad).to.be.true;
-      expect(impl.nameframeExperimentConfig.writeInBody).to.be.true;
+      const {instantLoad, writeInBody} = impl.getNameFrameExperimentConfig();
+      expect(instantLoad).to.be.true;
+      expect(writeInBody).to.be.true;
     });
   });
 

@@ -140,8 +140,11 @@ export class AmpList extends AMP.BaseElement {
     }
   }
 
-  /** @override */
-  doesReuseLoadingIndicator() {
+  /**
+   * amp-list reuses the loading indicator when the list is fetched again via bind mutation or refresh action
+   * @override
+   */
+  isLoadingReused() {
     return true;
   }
 
@@ -177,11 +180,13 @@ export class AmpList extends AMP.BaseElement {
     if (!this.element.getAttribute('src')) {
       return Promise.resolve();
     }
-    this.togglePlaceholder(true);
-    this.toggleLoading(true);
-    this.toggleFallbackInMutate_(false);
-    // Remove any previous items before the reload
-    removeChildren(dev().assertElement(this.container_));
+    if (this.element.hasAttribute('reset-on-refresh')) {
+      this.togglePlaceholder(true);
+      this.toggleLoading(true);
+      this.toggleFallbackInMutate_(false);
+      // Remove any previous items before the reload
+      removeChildren(dev().assertElement(this.container_));
+    }
 
     const itemsExpr = this.element.getAttribute('items') || 'items';
     return this.fetch_(itemsExpr).then(items => {
@@ -203,23 +208,22 @@ export class AmpList extends AMP.BaseElement {
       return this.scheduleRender_(items);
     }, error => {
       throw user().createError('Error fetching amp-list', error);
-    })
-        .then(() => {
-          if (this.getFallback()) {
-            // Hide in case fallback was displayed for a previous fetch.
-            this.toggleFallbackInMutate_(false);
-          }
-          this.togglePlaceholder(false);
-          this.toggleLoading(false);
-        }, error => {
-          this.toggleLoading(false);
-          if (this.getFallback()) {
-            this.toggleFallbackInMutate_(true);
-            this.togglePlaceholder(false);
-          } else {
-            throw error;
-          }
-        });
+    }).then(() => {
+      if (this.getFallback()) {
+        // Hide in case fallback was displayed for a previous fetch.
+        this.toggleFallbackInMutate_(false);
+      }
+      this.togglePlaceholder(false);
+      this.toggleLoading(false);
+    }, error => {
+      this.toggleLoading(false);
+      if (this.getFallback()) {
+        this.toggleFallbackInMutate_(true);
+        this.togglePlaceholder(false);
+      } else {
+        throw error;
+      }
+    });
   }
 
   /**
@@ -255,7 +259,6 @@ export class AmpList extends AMP.BaseElement {
       // If there's a new `renderItems_`, schedule it for render.
       if (this.renderItems_ !== current) {
         this.renderPass_.schedule(1); // Allow paint frame before next render.
-        user().error(TAG, 'New renderItems_, continuing render pass...');
       } else {
         this.renderItems_ = null;
       }
@@ -332,7 +335,6 @@ export class AmpList extends AMP.BaseElement {
     }
     return batchFetchJsonFor(ampdoc, this.element, itemsExpr, policy);
   }
-
 }
 
 

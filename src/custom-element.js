@@ -1515,27 +1515,26 @@ function createBaseCustomElementClass(win) {
     /**
      * Turns the loading indicator on or off.
      * @param {boolean} state
-     * @param {{cleanup: boolean, force: boolean}=} opt_options
+     * @param {{cleanup:boolean,force:boolean}=} opt_options
      * @public @final @this {!Element}
      */
     toggleLoading(state, opt_options) {
-      const force = opt_options && opt_options.force;
       const cleanup = opt_options && opt_options.cleanup;
+      const force = opt_options && opt_options.force;
       assertNotTemplate(this);
-      this.loadingState_ = state;
-      if (!state && !this.loadingContainer_) {
-        return;
-      }
-
-      if (state && !this.implementation_.doesReuseLoadingIndicator() &&
+      if (state && !this.implementation_.isLoadingReused() &&
           (this.layoutCount_ > 0 ||
               this.signals_.get(CommonSignals.RENDER_START))) {
         // Loading has already been canceled. Ignore.
         return;
       }
+      this.loadingState_ = state;
+      if (!state && !this.loadingContainer_) {
+        return;
+      }
 
       // Check if loading should be shown.
-      if (state && !this.isLoadingEnabled_() && !force) {
+      if (state && !force && !this.isLoadingEnabled_()) {
         this.loadingState_ = false;
         return;
       }
@@ -1544,7 +1543,7 @@ function createBaseCustomElementClass(win) {
         let state = this.loadingState_;
         // Repeat "loading enabled" check because it could have changed while
         // waiting for vsync.
-        if (state && !this.isLoadingEnabled_()  && !force) {
+        if (state && !force && !this.isLoadingEnabled_()) {
           state = false;
         }
         if (state) {
@@ -1558,7 +1557,7 @@ function createBaseCustomElementClass(win) {
         this.loadingElement_.classList.toggle('amp-active', state);
 
         if (!state && cleanup &&
-            !this.implementation_.doesReuseLoadingIndicator()) {
+            !this.implementation_.isLoadingReused()) {
           const loadingContainer = this.loadingContainer_;
           this.loadingContainer_ = null;
           this.loadingElement_ = null;

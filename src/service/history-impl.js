@@ -74,17 +74,15 @@ export class History {
   }
 
   /**
-   * Pushes a new history state onto the history stack, optionally specifying a
-   * callback to be invoked with a state when the new state is popped as well as
-   * the state to be supplied to the callback.
+   * Pushes new state into history stack with an optional callback to be called
+   * when this state is popped.
    * @param {!Function=} opt_onPop
-   * @param {!JsonObject=} opt_state
    * @return {!Promise<!HistoryIdDef>}
    */
-  push(opt_onPop, opt_state) {
+  push(opt_onPop) {
     return this.enque_(() => {
-      return this.binding_.push(opt_state).then(stackIndex => {
-        this.onStackIndexUpdated_({stackIndex});
+      return this.binding_.push().then(stackIndex => {
+        this.onStackIndexUpdated_(stackIndex);
         if (opt_onPop) {
           this.stackOnPop_[stackIndex] = opt_onPop;
         }
@@ -94,45 +92,18 @@ export class History {
   }
 
   /**
-   * Pops a previously pushed history state from the history stack. If a pop
-   * callback has been registered, it will be called with the state that was
-   * associated with the new head state within the history stack. All entries
-   * coming after the supplied history state will also be popped, and their
-   * callbacks executed in the same fashion.
-   * @param {!HistoryIdDef} stackIndex
+   * Pops a previously pushed state from the history stack. If onPop callback
+   * has been registered, it will be called. All states coming after this
+   * state will also be popped and their callbacks executed.
+   * @param {!HistoryIdDef} stateId
    * @return {!Promise}
    */
-  pop(stackIndex) {
+  pop(stateId) {
     return this.enque_(() => {
-      return this.binding_.pop(stackIndex).then(historyState => {
-        this.onStackIndexUpdated_(historyState);
+      return this.binding_.pop(stateId).then(stackIndex => {
+        this.onStackIndexUpdated_(stackIndex);
       });
     }, 'pop');
-  }
-
-  /**
-   * Replaces the current history state, optionally specifying the new fragment
-   * and/or new state to be associated with the replacement.
-   * @param {string=} opt_fragment
-   * @param {!JsonObject=} opt_state
-   * @return {!Promise}
-   */
-  replace(opt_fragment, opt_state) {
-    return this.enque_(() => this.binding_.replace(opt_fragment, opt_state),
-        'replace');
-  }
-
-  /**
-   * Retrieves the current history state, containing the current fragment as
-   * well as the state associated with the current history state, if
-   * available.
-   * @return {!Promise<!{
-   *   fragment: string,
-   *   state: !JsonObject|undefined
-   * }>}
-   */
-  get() {
-    return this.enque_(() => this.binding_.get(), 'get');
   }
 
   /**
@@ -147,10 +118,10 @@ export class History {
         // Nothing left to pop.
         return Promise.resolve();
       }
-      // Pop the current history state. The binding will ignore the request if
+      // Pop the current state. The binding will ignore the request if
       // it cannot satisfy it.
-      return this.binding_.pop(this.stackIndex_).then(historyState => {
-        this.onStackIndexUpdated_(historyState);
+      return this.binding_.pop(this.stackIndex_).then(stackIndex => {
+        this.onStackIndexUpdated_(stackIndex);
       });
     }, 'goBack');
   }
@@ -194,19 +165,16 @@ export class History {
   }
 
   /**
-   * @param {!{
-   *   stackIndex: number,
-   *   state: !JsonObject|undefined
-   * }} historyState
+   * @param {number} stackIndex
    * @private
    */
-  onStackIndexUpdated_(historyState) {
-    this.stackIndex_ = historyState.stackIndex;
-    this.doPop_(historyState.state);
+  onStackIndexUpdated_(stackIndex) {
+    this.stackIndex_ = stackIndex;
+    this.doPop_();
   }
 
   /** @private */
-  doPop_(opt_state) {
+  doPop_() {
     if (this.stackIndex_ >= this.stackOnPop_.length - 1) {
       return;
     }
@@ -224,7 +192,7 @@ export class History {
       for (let i = 0; i < toPop.length; i++) {
         // With the same delay timeouts must observe the order, although
         // there's no hard requirement in this case to follow the pop order.
-        this.timer_.delay(() => toPop[i](opt_state), 1);
+        this.timer_.delay(toPop[i], 1);
       }
     }
   }
@@ -305,46 +273,20 @@ class HistoryBindingInterface {
   setOnStackIndexUpdated(unusedCallback) {}
 
   /**
-   * Pushes a new history state onto the history stack, optionally specifying
-   * the state object associated with the current history state. If specified,
-   * the state object will be returned when the new history state is popped
-   * off the history stack.
-   * Returns a promise that yields the stack index of the new history state.
+   * Pushes new state into the history stack. Returns promise that yields new
+   * stack index.
    * @return {!Promise<number>}
    */
-  push(opt_state) {}
+  push() {}
 
   /**
-   * Pops a previously pushed history state from the history stack. All history
-   * states coming after this history state will also be popped.
-   * Returns a promise that yields the popped history state.
+   * Pops a previously pushed state from the history stack. All states coming
+   * after this state will also be popped. Returns promise that yields new
+   * state index.
    * @param {number} unusedStackIndex
-   * @return {!{
-   *   stackIndex: number,
-   *   state: !JsonObject|undefined
-   * }}
+   * @return {!Promise<number>}
    */
   pop(unusedStackIndex) {}
-
-  /**
-   * Replaces the current history state, optionally specifying the new fragment
-   * and/or new state object to be associated with the replacement.
-   * @param {string=} opt_fragment
-   * @param {!JsonObject=} opt_state
-   * @return {!Promise}
-   */
-  replace(opt_fragment, opt_state) {}
-
-  /**
-   * Retrieves the current history state, containing the current fragment as
-   * well as the state object associated with the current history state, if
-   * available.
-   * @return {!Promise<!{
-   *   fragment: string,
-   *   state: !JsonObject|undefined
-   * }>}
-   */
-  get() {}
 
   /**
    * Replaces the state for local target navigation.
@@ -510,11 +452,9 @@ export class HistoryBindingNatural_ {
   }
 
   /** @override */
-  push(opt_state) {
+  push() {
     return this.whenReady_(() => {
-      // If specified, associate the given state object with the
-      // current history state before pushing the new history state.
-      this.historyPushState_(opt_state);
+      this.historyPushState_();
       return Promise.resolve(this.stackIndex_);
     });
   }
@@ -525,38 +465,7 @@ export class HistoryBindingNatural_ {
     stackIndex = Math.max(stackIndex, this.startIndex_);
     return this.whenReady_(() => {
       return this.back_(this.stackIndex_ - stackIndex + 1);
-    }).then(newStackIndex => {
-      return {
-        stackIndex: newStackIndex,
-        state: this.getState_(),
-      };
     });
-  }
-
-  /** @override */
-  replace(opt_fragment, opt_state) {
-    const state = opt_state ? opt_state : {};
-    this.win.history.replaceState(state, '', '#' + (opt_fragment || ''));
-    return Promise.resolve();
-  }
-
-  /** @override */
-  get() {
-    return Promise.resolve({
-      fragment: this.getFragment(),
-      state: this.getState_(),
-    });
-  }
-
-  /** @override */
-  getFragment() {
-    // Strip leading '#'
-    return Promise.resolve(this.win.location.hash.substr(1));
-  }
-
-  /** @override */
-  updateFragment(fragment) {
-    return this.replace(fragment);
   }
 
   /**
@@ -585,7 +494,7 @@ export class HistoryBindingNatural_ {
       // Make sure stack has enough space. Whether we are going forward or
       // backward, the stack should have at least one extra cell.
       newStackIndex = this.win.history.length - 2;
-      this.updateStackIndex_(newStackIndex, state);
+      this.updateStackIndex_(newStackIndex);
     }
 
     if (stackIndex == undefined) {
@@ -608,7 +517,7 @@ export class HistoryBindingNatural_ {
 
     // Update the stack, pop squeezed states.
     if (newStackIndex != this.stackIndex_) {
-      this.updateStackIndex_(newStackIndex, state);
+      this.updateStackIndex_(newStackIndex);
     }
 
     // User navigation is allowed to move past the starting point of
@@ -702,7 +611,7 @@ export class HistoryBindingNatural_ {
       state[HISTORY_PROP_] = stackIndex;
       this.replaceState_(state);
     }
-    this.updateStackIndex_(stackIndex, state);
+    this.updateStackIndex_(stackIndex);
   }
 
   /**
@@ -751,15 +660,14 @@ export class HistoryBindingNatural_ {
     const stackIndex = Math.min(this.stackIndex_, this.win.history.length - 1);
     state[HISTORY_PROP_] = stackIndex;
     this.replaceState_(state, title, url);
-    this.updateStackIndex_(stackIndex, state);
+    this.updateStackIndex_(stackIndex);
   }
 
   /**
    * @param {number} stackIndex
-   * @param {!JsonObject} state
    * @private
    */
-  updateStackIndex_(stackIndex, state) {
+  updateStackIndex_(stackIndex) {
     this.assertReady_();
     stackIndex = Math.min(stackIndex, this.win.history.length - 1);
     if (this.stackIndex_ != stackIndex) {
@@ -767,9 +675,25 @@ export class HistoryBindingNatural_ {
           stackIndex);
       this.stackIndex_ = stackIndex;
       if (this.onStackIndexUpdated_) {
-        this.onStackIndexUpdated_({stackIndex, state});
+        this.onStackIndexUpdated_(stackIndex);
       }
     }
+  }
+
+  /** @override */
+  getFragment() {
+    let hash = this.win.location.hash;
+    /* Strip leading '#' */
+    hash = hash.substr(1);
+    return Promise.resolve(hash);
+  }
+
+  /** @override */
+  updateFragment(fragment) {
+    if (this.win.history.replaceState) {
+      this.win.history.replaceState({}, '', '#' + fragment);
+    }
+    return Promise.resolve();
   }
 }
 
@@ -824,55 +748,25 @@ export class HistoryBindingVirtual_ {
   }
 
   /** @override */
-  push(opt_state) {
+  push() {
     // Current implementation doesn't wait for response from viewer.
-    this.updateStackIndex_(this.stackIndex_ + 1, opt_state);
-    const message = dict({
-      'stackIndex': this.stackIndex_,
-      'state': opt_state,
+    this.updateStackIndex_(this.stackIndex_ + 1);
+    return this.viewer_.sendMessageAwaitResponse(
+        'pushHistory', dict({'stackIndex': this.stackIndex_})).then(() => {
+      return this.stackIndex_;
     });
-    return this.viewer_.sendMessageAwaitResponse('pushHistory', message)
-        .then(() => this.stackIndex_);
   }
 
   /** @override */
   pop(stackIndex) {
     if (stackIndex > this.stackIndex_) {
-      return this.get();
+      return Promise.resolve(this.stackIndex_);
     }
-    const message = dict({'stackIndex': this.stackIndex_});
-    return this.viewer_.sendMessageAwaitResponse('popHistory', message)
-        .then(response => {
-          this.updateStackIndex_(stackIndex - 1);
-          const poppedHistoryState = {stackIndex: this.stackIndex_};
-          if (response && response['state']) {
-            poppedHistoryState.state = response['state'];
-          }
-          return poppedHistoryState;
-        });
-  }
-
-  /** @override */
-  replace(opt_fragment, opt_state) {
-    const message = dict({
-      'fragment': opt_fragment,
-      'state': opt_state,
+    return this.viewer_.sendMessageAwaitResponse(
+        'popHistory', dict({'stackIndex': this.stackIndex_})).then(() => {
+      this.updateStackIndex_(stackIndex - 1);
+      return this.stackIndex_;
     });
-    return /** @type {!Promise} */ (this.viewer_.sendMessageAwaitResponse(
-        'replaceHistory', message, /* cancelUnsent */true));
-  }
-
-  /** @override */
-  get() {
-    return this.viewer_.sendMessageAwaitResponse('getHistory', undefined,
-        /* cancelUnsent */true)
-        .then(response => {
-          return {
-            fragment: response['fragment'],
-            stackIndex: response['stackIndex'],
-            state: response['state'],
-          };
-        });
   }
 
   /**
@@ -880,21 +774,20 @@ export class HistoryBindingVirtual_ {
    * @private
    */
   onHistoryPopped_(data) {
-    this.updateStackIndex_(data['newStackIndex'], data['state']);
+    this.updateStackIndex_(data['newStackIndex']);
   }
 
   /**
    * @param {number} stackIndex
-   * @param {!JsonObject=} opt_state
    * @private
    */
-  updateStackIndex_(stackIndex, opt_state) {
+  updateStackIndex_(stackIndex) {
     if (this.stackIndex_ != stackIndex) {
       dev().fine(TAG_, 'stack index changed: ' + this.stackIndex_ + ' -> ' +
           stackIndex);
       this.stackIndex_ = stackIndex;
       if (this.onStackIndexUpdated_) {
-        this.onStackIndexUpdated_({stackIndex, state: opt_state});
+        this.onStackIndexUpdated_(stackIndex);
       }
     }
   }
