@@ -108,8 +108,6 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
               data => {
                 this.iframeService_.sendIframeMessage(
                     this.iframe_, this.iframeOrigin_, 'loadPaymentData', data);
-                this.getPaymentTokenInput_().value =
-                    data.paymentMethodToken.token;
               },
               error => {this.user().error(
                   this.getTag_(),
@@ -128,16 +126,6 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
    */
   populatePaymentToken_() {
     const input = this.getPaymentTokenInput_();
-
-    // If the payment token is already present, then we can submit the form
-    // immediately.
-    // TODO(justinmanley): Handle the case where the user has tapped 'Continue'
-    // in the instrument selector and then immediately triggered the form submit
-    // (e.g. tapped 'Buy now') before the payment token was loaded and added to
-    // the <input> tag. We want to ensure that there is no race condition there.
-    if (input.value) {
-      return Promise.resolve();
-    }
 
     // If the payment token is not yet present, then we need to fetch it before
     // submitting the form. This will happen if the user decides to use the
