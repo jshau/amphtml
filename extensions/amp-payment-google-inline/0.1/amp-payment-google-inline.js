@@ -117,6 +117,8 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
       const customEvent =
           createCustomEvent(this.win, `${TAG}.${name}`, event.data.data);
       this.actions_.trigger(this.element, name, customEvent, ActionTrust.HIGH);
+    } else if (event.data.message === 'resize') {
+      this.resizeIframe_(event.data.data);
     }
   }
 
@@ -167,6 +169,15 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     }
 
     return input;
+  }
+
+  /**
+   * @param {!Object} resizeRequest
+   * @private
+   */
+  resizeIframe_(resizeRequest) {
+    this.iframe_.style.transition = resizeRequest['transition'];
+    this.iframe_.style.height = resizeRequest['frameHeight'] + 'px';
   }
 
   /** @override */
