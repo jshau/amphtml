@@ -50,6 +50,7 @@ describes.realWin('amp-payment-google-inline', {
     viewerMock = mockServiceForDoc(env.sandbox, env.ampdoc, 'viewer', [
       'whenFirstVisible',
       'whenNextVisible',
+      'sendMessage',
       'sendMessageAwaitResponse',
     ]);
     viewerMock.whenFirstVisible.returns(Promise.resolve());
@@ -246,6 +247,24 @@ describes.realWin('amp-payment-google-inline', {
 
       window.postMessage({
         message: 'loadPaymentData',
+        data: {},
+      }, '*');
+    });
+  });
+
+  it('should call prefetchPaymentData if requested by iframe', function() {
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('getInlinePaymentIframeUrl', {})
+        .returns(Promise.resolve(IFRAME_URL));
+    viewerMock.sendMessage.withArgs('prefetchPaymentData', {})
+        .returns();
+
+    return getAmpPaymentGoogleInline().then(gPayInline => {
+      const iframes = gPayInline.getElementsByTagName('iframe');
+      expect(iframes.length).to.equal(1);
+
+      window.postMessage({
+        message: 'prefetchPaymentData',
         data: {},
       }, '*');
     });
