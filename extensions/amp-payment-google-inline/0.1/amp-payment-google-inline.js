@@ -5,6 +5,7 @@
 import {ActionTrust} from '../../../src/action-trust';
 import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {CSS} from '../../../build/amp-payment-google-inline-0.1.css';
+import {Layout} from '../../../src/layout';
 import {Services} from '../../../src/services';
 import {closestByTag} from '../../../src/dom';
 import {createCustomEvent} from '../../../src/event-helper';
@@ -12,6 +13,7 @@ import {formOrNullForElement} from '../../../src/form';
 import {getServiceForDoc} from '../../../src/service';
 import {map} from '../../../src/utils/object';
 import {parseUrl} from '../../../src/url';
+import {setStyles} from '../../../src/style';
 
 /** @const {string} */
 const TAG = 'amp-payment-google-inline';
@@ -36,6 +38,14 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
 
     /** @private {string} */
     this.iframeOrigin_ = '';
+
+    /** @private {function()|null} */
+    this.iframeReadyResolver_ = null;
+
+    /** @private {Promise} */
+    this.iframeReadyPromise_ = new Promise(resolve => {
+      this.iframeReadyResolver_ = resolve;
+    });
   }
 
   /** @override */
@@ -54,8 +64,13 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
   }
 
   /** @override */
-  isLayoutSupported(unusedLayout) {
-    return true;
+  layoutCallback() {
+    return this.iframeReadyPromise_;
+  }
+
+  /** @override */
+  isLayoutSupported(layout) {
+    return layout == Layout.FIXED_HEIGHT;
   }
 
   /**
@@ -113,6 +128,10 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
                   this.getTag_(),
                   'Error while calling loadPaymentData: ' + error);});
     } else if (event.data.message === 'paymentReadyStatusChanged') {
+      if (this.iframeReadyResolver_) {
+        this.iframeReadyResolver_();
+        this.iframeReadyResolver_ = null;
+      }
       const name = PAYMENT_READY_STATUS_CHANGED;
       const customEvent =
           createCustomEvent(this.win, `${TAG}.${name}`, event.data.data);
@@ -176,8 +195,14 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
    * @private
    */
   resizeIframe_(resizeRequest) {
-    this.iframe_.style.transition = resizeRequest['transition'];
-    this.iframe_.style.height = resizeRequest['frameHeight'] + 'px';
+    setStyles(this.iframe_, {
+      transition: resizeRequest['transition'],
+      height: resizeRequest['frameHeight'] + 'px',
+    });
+    setStyles(this.element, {
+      transition: resizeRequest['transition'],
+      height: resizeRequest['frameHeight'] + 'px',
+    });
   }
 
   /** @override */
