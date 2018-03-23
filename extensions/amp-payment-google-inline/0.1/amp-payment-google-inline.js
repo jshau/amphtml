@@ -117,6 +117,10 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
       const customEvent =
           createCustomEvent(this.win, `${TAG}.${name}`, event.data.data);
       this.actions_.trigger(this.element, name, customEvent, ActionTrust.HIGH);
+    } else if (event.data.message === 'prefetchPaymentData') {
+      this.viewer
+          .sendMessage(
+              'prefetchPaymentData', this.getPaymentDataRequest_());
     } else if (event.data.message === 'resize') {
       this.resizeIframe_(event.data.data);
     }
