@@ -111,7 +111,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
               },
               error => {this.user().error(
                   this.getTag_(),
-                  'Error while calling loadPaymentData: ' + error)});
+                  'Error while calling loadPaymentData: ' + error);});
     } else if (event.data.message === 'paymentReadyStatusChanged') {
       const name = PAYMENT_READY_STATUS_CHANGED;
       const customEvent =
@@ -141,7 +141,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
             },
             error => {this.user().error(
                 this.getTag_(),
-                'Error on submission: ' + error)});
+                'Error on submission: ' + error);});
   }
 
   /**
@@ -248,7 +248,7 @@ export class AmpPaymentGoogleInlineService {
    * @returns {!Promise}
    */
   sendIframeMessageAwaitResponse(
-      iframe, iframeOrigin, messageName, messagePayload) {
+    iframe, iframeOrigin, messageName, messagePayload) {
     const messageId = this.nextMessageId_++;
     const promise = new Promise((resolve, reject) => {
       this.requestData_[messageId] = {
@@ -292,7 +292,7 @@ export class AmpPaymentGoogleInlineService {
    * @private
    */
   sendIframeMessageWithId_(
-      iframe, iframeOrigin, messageName, messageId, messagePayload) {
+    iframe, iframeOrigin, messageName, messageId, messagePayload) {
     this.sendIframeMessageInternal_(
         iframe, iframeOrigin, {
           message: messageName,

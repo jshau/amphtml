@@ -1732,7 +1732,7 @@ describes.realWin('CustomElement', {amp: true}, env => {
     it('should NOT cleanup if re-used', () => {
       stubInA4A(false);
       element.prepareLoading_();
-      sandbox.stub(element.implementation_, 'doesReuseLoadingIndicator')
+      sandbox.stub(element.implementation_, 'isLoadingReused')
           .callsFake(() => true);
       element.toggleLoading(false, {cleanup: true});
 

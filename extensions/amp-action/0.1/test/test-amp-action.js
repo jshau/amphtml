@@ -1,5 +1,5 @@
-import {ActionService} from '../amp-action';
 import {ActionInvocation} from '../../../../src/service/action-impl';
+import {ActionService} from '../amp-action';
 
 describes.fakeWin('ActionService', {
   amp: true,

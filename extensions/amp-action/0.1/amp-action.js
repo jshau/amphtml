@@ -33,7 +33,7 @@ export class ActionService {
     this.viewer_ = Services.viewerForDoc(ampdoc);
 
     Services.actionServiceForDoc(ampdoc).installActionHandler(
-      this.actionElement_, this.actionHandler_.bind(this), ActionTrust.HIGH);
+        this.actionElement_, this.actionHandler_.bind(this), ActionTrust.HIGH);
   }
 
   /**

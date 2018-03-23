@@ -141,7 +141,7 @@ describes.realWin('amp-payment-google-inline', {
                 '{"paymentMethodToken":{"token":"' + PAYMENT_TOKEN + '"}}';
             expect(input.value).to.equal(data);
             expect(Array.from(request.body.entries())).to.deep.include([
-              PAYMENT_DATA_INPUT_ID, data
+              PAYMENT_DATA_INPUT_ID, data,
             ]);
             resolve();
           } catch (e) {
@@ -179,7 +179,7 @@ describes.realWin('amp-payment-google-inline', {
       expect(input.value).to.equal('');
 
       const formSubmitted = new Promise((resolve, reject) => {
-        xhrMock.fetch.callsFake((url, request) => {
+        xhrMock.fetch.callsFake(() => {
           // Without this try-catch block, the nested promise swallows up any
           // failed expectations and the test times out instead of failing.
           try {
