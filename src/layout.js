@@ -72,6 +72,7 @@ export const naturalDimensions_ = {
   'AMP-ANALYTICS': {width: '1px', height: '1px'},
   // TODO(dvoytenko): audio should have width:auto.
   'AMP-AUDIO': null,
+  'AMP-PAYMENT-GOOGLE-INLINE': {height: '252px'},
   'AMP-SOCIAL-SHARE': {width: '60px', height: '44px'},
 };
 
@@ -91,6 +92,7 @@ export const LOADING_ELEMENTS_ = {
   'AMP-INSTAGRAM': true,
   'AMP-LIST': true,
   'AMP-OOYALA-PLAYER': true,
+  'AMP-PAYMENT-GOOGLE-INLINE': true,
   'AMP-PINTEREST': true,
   'AMP-PLAYBUZZ': true,
   'AMP-VIDEO': true,
