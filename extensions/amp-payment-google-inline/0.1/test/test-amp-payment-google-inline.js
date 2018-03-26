@@ -48,10 +48,11 @@ describes.realWin('amp-payment-google-inline', {
     new AmpFormService(env.ampdoc);
 
     viewerMock = mockServiceForDoc(env.sandbox, env.ampdoc, 'viewer', [
-      'whenFirstVisible',
-      'whenNextVisible',
+      'isTrustedViewer',
       'sendMessage',
       'sendMessageAwaitResponse',
+      'whenFirstVisible',
+      'whenNextVisible',
     ]);
     viewerMock.whenFirstVisible.returns(Promise.resolve());
     viewerMock.whenNextVisible.returns(Promise.resolve());
@@ -269,6 +270,55 @@ describes.realWin('amp-payment-google-inline', {
       }, '*');
     });
   });
+
+  it('should reply validation viewer request from frame in trusted viewer',
+     function() {
+       viewerMock.sendMessageAwaitResponse
+           .withArgs('getInlinePaymentIframeUrl', {})
+           .returns(Promise.resolve(IFRAME_URL));
+       viewerMock.isTrustedViewer.returns(true);
+
+
+       return getAmpPaymentGoogleInline().then(gPayInline => {
+         const iframes = gPayInline.getElementsByTagName('iframe');
+         expect(iframes.length).to.equal(1);
+         iframeMock.sendIframeMessage.withArgs(
+             iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
+             {'result': true});
+
+         window.postMessage(
+             {
+               message: 'validateViewer',
+               data: {},
+             },
+             '*');
+       });
+     });
+
+  it('should not reply validation viewer in non-trusted viewer',
+     function() {
+       viewerMock.sendMessageAwaitResponse
+           .withArgs('getInlinePaymentIframeUrl', {})
+           .returns(Promise.resolve(IFRAME_URL));
+       viewerMock.isTrustedViewer.returns(false);
+
+
+       return getAmpPaymentGoogleInline().then(gPayInline => {
+         const iframes = gPayInline.getElementsByTagName('iframe');
+         expect(iframes.length).to.equal(1);
+         iframeMock.sendIframeMessage
+             .withArgs(
+                 iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
+             {'result': false});
+
+         window.postMessage(
+             {
+               message: 'validateViewer',
+               data: {},
+             },
+             '*');
+       });
+     });
 
   function getAmpPaymentGoogleInline(opt_isTestMode) {
     const form = doc.createElement('form');
