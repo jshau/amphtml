@@ -123,6 +123,10 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
               'prefetchPaymentData', this.getPaymentDataRequest_());
     } else if (event.data.message === 'resize') {
       this.resizeIframe_(event.data.data);
+    } else if (event.data.message === 'validateViewer') {
+      this.iframeService_.sendIframeMessage(
+          this.iframe_, this.iframeOrigin_, 'validateViewerReply',
+          {'result': this.viewer.isTrustedViewer()});
     }
   }
 
