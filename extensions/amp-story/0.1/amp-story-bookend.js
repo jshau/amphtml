@@ -112,12 +112,12 @@ function buildArticleTemplate(articleData) {
       {
         tag: 'h2',
         attrs: dict({'class': 'i-amphtml-story-bookend-article-heading'}),
-        text: articleData.title,
+        unlocalizedString: articleData.title,
       },
       {
         tag: 'div',
         attrs: dict({'class': 'i-amphtml-story-bookend-article-meta'}),
-        text: articleData.domainName,
+        unlocalizedString: articleData.domainName,
       },
     ],
   });
@@ -150,7 +150,7 @@ function buildArticlesContainerTemplate(articleSets) {
       template.push({
         tag: 'h3',
         attrs: dict({'class': 'i-amphtml-story-bookend-heading'}),
-        text: articleSet.heading,
+        unlocalizedString: articleSet.heading,
       });
     }
     template.push({
@@ -188,12 +188,12 @@ function buildReplayButtonTemplate(doc, title, domainName, opt_imageUrl) {
       {
         tag: 'h2',
         attrs: dict({'class': 'i-amphtml-story-bookend-article-heading'}),
-        text: title,
+        unlocalizedString: title,
       },
       {
         tag: 'div',
         attrs: dict({'class': 'i-amphtml-story-bookend-article-meta'}),
-        text: domainName,
+        unlocalizedString: domainName,
       },
     ],
   });
@@ -282,10 +282,6 @@ export class Bookend {
     innerContainer.appendChild(this.shareWidget_.build(ampdoc));
     this.initializeListeners_();
 
-    if (this.storeService_.get(StateProperty.DESKTOP_STATE)) {
-      this.toggleDesktopAttribute_(true);
-    }
-
     this.vsync_.mutate(() => {
       this.storyElement_.appendChild(this.getRoot());
     });
@@ -321,7 +317,7 @@ export class Bookend {
 
     this.storeService_.subscribe(StateProperty.DESKTOP_STATE, isDesktop => {
       this.onDesktopStateUpdate_(isDesktop);
-    });
+    }, true /** callToInitialize */);
   }
 
   /**
