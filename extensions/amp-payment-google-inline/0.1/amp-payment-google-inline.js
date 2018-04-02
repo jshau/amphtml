@@ -56,10 +56,15 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
 
     this.viewer.whenFirstVisible()
         .then(() => super.initializePaymentClient_())
-        .then(() => {
-          return this.viewer.sendMessageAwaitResponse(
-              'getInlinePaymentIframeUrl', this.getPaymentDataRequest_());
-        })
+        .then(
+            () => {
+              return this.viewer.sendMessageAwaitResponse(
+                  'getInlinePaymentIframeUrl', this.getPaymentDataRequest_());
+            },
+            error => {
+              this.user().error(
+                  'Initialize payment client failed with error: ' + error);
+            })
         .then(data => this.render_(data));
   }
 
@@ -143,9 +148,11 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     } else if (event.data.message === 'resize') {
       this.resizeIframe_(event.data.data);
     } else if (event.data.message === 'validateViewer') {
-      this.iframeService_.sendIframeMessage(
-          this.iframe_, this.iframeOrigin_, 'validateViewerReply',
-          {'result': this.viewer.isTrustedViewer()});
+      this.viewer.isTrustedViewer().then(result => {
+        this.iframeService_.sendIframeMessage(
+            this.iframe_, this.iframeOrigin_, 'validateViewerReply',
+            {'result': result});
+      });
     }
   }
 
