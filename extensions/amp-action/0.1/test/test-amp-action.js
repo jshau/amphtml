@@ -1,5 +1,6 @@
 import {ActionInvocation} from '../../../../src/service/action-impl';
 import {ActionService} from '../amp-action';
+import {Services} from '../../../../src/services';
 
 describes.fakeWin('ActionService', {
   amp: true,
@@ -76,5 +77,91 @@ describes.fakeWin('ActionService', {
     const invocation = new ActionInvocation(element, 'orderCompleted');
     service.actionHandler_(invocation);
     expect(sendMessageStub).to.not.be.called;
+  });
+
+  it('should send handle the signIn action', () => {
+    const config = {
+      'providerId': 'foo-bar',
+    };
+    element.textContent = JSON.stringify(config);
+    const service = new ActionService(ampdoc);
+    const sendMessageStub = sandbox.stub(
+      service.viewer_, 'sendMessageAwaitResponse');
+    sendMessageStub.returns(Promise.reject());
+    const invocation = new ActionInvocation(element, 'signIn');
+    service.actionHandler_(invocation);
+    expect(sendMessageStub).to.be.calledOnce;
+    expect(sendMessageStub.firstCall.args[0]).to.equal('requestSignIn');
+    expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
+      providers: ['actions-on-google-gsi'],
+    });
+  });
+
+  it('should enable IDENTITY_TOKEN substitution', () => {
+    const config = {
+      'providerId': 'foo-bar',
+    };
+    element.textContent = JSON.stringify(config);
+    const service = new ActionService(ampdoc);
+    service.vsync_ = {
+      mutate: callback => {
+        callback();
+      },
+    };
+    service.start_();
+    const sendMessageStub = sandbox.stub(
+      service.viewer_, 'sendMessageAwaitResponse');
+    sendMessageStub.returns(Promise.resolve('fake_token'));
+
+    const urlReplacements = Services.urlReplacementsForDoc(ampdoc);
+    return urlReplacements
+        .expandUrlAsync('https://foo.com/bar?access_token=IDENTITY_TOKEN')
+        .then((url) => {
+          expect(url).to.equal('https://foo.com/bar?access_token=fake_token');
+          expect(sendMessageStub).to.be.calledOnce;
+          expect(sendMessageStub.firstCall.args[0]).to.equal(
+            'getAccessTokenPassive');
+          expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
+            providers: ['actions-on-google-gsi'],
+          });
+          expect(document.documentElement).to.have.class(
+            'amp-action-identity-available');
+          expect(document.documentElement).not.to.have.class(
+              'amp-action-identity-unavailable');
+        });
+  });
+
+  it('should set the css classes if IDENTITY_TOKEN is unavailable', () => {
+    const config = {
+      'providerId': 'foo-bar',
+    };
+    element.textContent = JSON.stringify(config);
+    const service = new ActionService(ampdoc);
+    service.vsync_ = {
+      mutate: callback => {
+        callback();
+      },
+    };
+    service.start_();
+    const sendMessageStub = sandbox.stub(
+      service.viewer_, 'sendMessageAwaitResponse');
+    sendMessageStub.returns(Promise.reject());
+
+    const urlReplacements = Services.urlReplacementsForDoc(ampdoc);
+    return urlReplacements
+        .expandUrlAsync('https://foo.com/bar?access_token=IDENTITY_TOKEN')
+        .then((url) => {
+          expect(url).to.equal('https://foo.com/bar?access_token=');
+          expect(sendMessageStub).to.be.calledOnce;
+          expect(sendMessageStub.firstCall.args[0]).to.equal(
+            'getAccessTokenPassive');
+          expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
+            providers: ['actions-on-google-gsi'],
+          });
+          expect(document.documentElement).not.to.have.class(
+            'amp-action-identity-available');
+          expect(document.documentElement).to.have.class(
+              'amp-action-identity-unavailable');
+        });
   });
 });
