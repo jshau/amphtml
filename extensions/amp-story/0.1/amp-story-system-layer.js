@@ -18,7 +18,7 @@ import {CSS} from '../../../build/amp-story-system-layer-0.1.css';
 import {DevelopmentModeLog, DevelopmentModeLogButtonSet} from './development-ui';
 import {ProgressBar} from './progress-bar';
 import {Services} from '../../../src/services';
-import {createShadowRoot} from '../../../src/shadow-embed';
+import {createShadowRootWithStyle} from './utils';
 import {dev} from '../../../src/log';
 import {dict} from '../../../src/utils/object';
 import {getMode} from '../../../src/mode';
@@ -44,27 +44,7 @@ const TEMPLATE = {
   children: [
     {
       tag: 'div',
-      attrs: dict({'class': 'i-amphtml-story-ui-left'}),
-      children: [
-        {
-          tag: 'div',
-          attrs: dict({
-            'role': 'button',
-            'class': UNMUTE_CLASS + ' i-amphtml-story-button',
-          }),
-        },
-        {
-          tag: 'div',
-          attrs: dict({
-            'role': 'button',
-            'class': MUTE_CLASS + ' i-amphtml-story-button',
-          }),
-        },
-      ],
-    },
-    {
-      tag: 'div',
-      attrs: dict({'class': 'i-amphtml-story-ui-right'}),
+      attrs: dict({'class': 'i-amphtml-story-system-layer-buttons'}),
       children: [
         {
           tag: 'div',
@@ -117,7 +97,7 @@ export class SystemLayer {
     this.systemLayerEl_ = null;
 
     /** @private {?Element} */
-    this.leftButtonTray_ = null;
+    this.buttonsContainer_ = null;
 
     /** @private @const {!ProgressBar} */
     this.progressBar_ = ProgressBar.create(win);
@@ -147,21 +127,16 @@ export class SystemLayer {
     this.isBuilt_ = true;
 
     this.root_ = this.win_.document.createElement('div');
-    const shadowRoot = createShadowRoot(this.root_);
-
     this.systemLayerEl_ = renderAsElement(this.win_.document, TEMPLATE);
 
-    const style = this.win_.document.createElement('style');
-    style./*OK*/textContent = CSS;
-
-    shadowRoot.appendChild(style);
-    shadowRoot.appendChild(this.systemLayerEl_);
+    createShadowRootWithStyle(this.root_, this.systemLayerEl_, CSS);
 
     this.systemLayerEl_.insertBefore(
         this.progressBar_.build(pageIds), this.systemLayerEl_.lastChild);
 
-    this.leftButtonTray_ =
-        this.systemLayerEl_.querySelector('.i-amphtml-story-ui-left');
+    this.buttonsContainer_ =
+        this.systemLayerEl_.querySelector(
+            '.i-amphtml-story-system-layer-buttons');
 
     this.buildForDevelopmentMode_();
 
@@ -183,9 +158,9 @@ export class SystemLayer {
       return;
     }
 
-    this.leftButtonTray_.appendChild(this.developerButtons_.build(
+    this.buttonsContainer_.appendChild(this.developerButtons_.build(
         this.developerLog_.toggle.bind(this.developerLog_)));
-    this.root_.appendChild(this.developerLog_.build());
+    this.getShadowRoot().appendChild(this.developerLog_.build());
   }
 
   /**
