@@ -425,6 +425,16 @@ export class Viewport {
   }
 
   /**
+   * Returns the rect of the element within the viewport.
+   * Note that this function should be called in vsync measure.
+   * @param {!Element} el
+   * @return {!../../layout-rect.LayoutRectDef}
+   */
+  getLayoutRectWithinViewport(el) {
+     return this.binding_.getLayoutRect(el, 0, 0);
+  }
+
+  /**
    * Returns the clientRect of the element.
    * Note: This method does not taking intersection into account.
    * TODO(@zhouyx): We may need to return info on the intersectionRect.

@@ -143,7 +143,7 @@ export class FormEventHandler {
    * @private
    */
   sendScrollEvent_(messageType) {
-    this.resources_.getElementLayoutBox(this.focusedElement_)
+    this.resources_.getElementLayoutBoxWithinViewport(this.focusedElement_)
         .then(fieldLayoutBox => {
           const message = {
             field: getFieldAsObject(this.focusedElement_),
@@ -178,7 +178,7 @@ export class FormEventHandler {
     for (let i = 0; i < e.target.form.elements.length; i++) {
       formFields.push(getFieldAsObject(e.target.form.elements[i]));
     }
-    this.resources_.getElementLayoutBox(e.target)
+    this.resources_.getElementLayoutBoxWithinViewport(e.target)
         .then(fieldLayoutBox => {
           const message = {
             field: getFieldAsObject(e.target),

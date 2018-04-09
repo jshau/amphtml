@@ -459,6 +459,18 @@ export class Resources {
   }
 
   /**
+   * Returns a promise to the layoutBox for the element within the viewport.
+   * @param {!Element} element
+   * @return {!Promise<!../layout-rect.LayoutRectDef>}
+   */
+  getElementLayoutBoxWithinViewport(element) {
+    return this.vsync_.measurePromise(() => {
+      return this.getViewport().getLayoutRectWithinViewport(element);
+    });
+  }
+
+
+  /**
    * @param {!Resource} resource
    * @return {!Promise<!../layout-rect.LayoutRectDef>}
    * @private
