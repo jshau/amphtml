@@ -19,8 +19,9 @@ import {Entitlement} from '../entitlement';
 import {LocalSubscriptionPlatform} from '../local-subscription-platform';
 import {PageConfig} from '../../../../third_party/subscriptions-project/config';
 import {ServiceAdapter} from '../service-adapter';
+import {SubscriptionAnalytics} from '../analytics';
 
-describes.fakeWin('local-subscriptions', {amp: true}, env => {
+describes.fakeWin('LocalSubscriptionsPlatform', {amp: true}, env => {
   let ampdoc;
   let localSubscriptionPlatform;
   let serviceAdapter;
@@ -52,6 +53,7 @@ describes.fakeWin('local-subscriptions', {amp: true}, env => {
         'authorizationUrl': authUrl,
         'actions': actionMap,
         'pingbackUrl': pingbackUrl,
+        'baseScore': 99,
       },
     ],
   };
@@ -64,7 +66,8 @@ describes.fakeWin('local-subscriptions', {amp: true}, env => {
     sandbox.stub(serviceAdapter, 'getDialog')
         .callsFake(() => new Dialog(ampdoc));
     localSubscriptionPlatform = new LocalSubscriptionPlatform(ampdoc,
-        serviceConfig.services[0], serviceAdapter);
+        serviceConfig.services[0], serviceAdapter,
+        new SubscriptionAnalytics(ampdoc.getRootNode()));
   });
 
   it('initializeListeners_ should listen to clicks on rootNode', () => {
@@ -75,6 +78,10 @@ describes.fakeWin('local-subscriptions', {amp: true}, env => {
     expect(domStub).calledOnce;
     expect(domStub.getCall(0).args[0])
         .to.be.equals('click');
+  });
+
+  it('should return baseScore', () => {
+    expect(localSubscriptionPlatform.getBaseScore()).to.be.equal(99);
   });
 
   it('should fetch the entitlements on getEntitlements', () => {

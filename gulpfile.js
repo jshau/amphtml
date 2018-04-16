@@ -103,7 +103,6 @@ declareExtension('amp-compare-slider', '0.1');
 declareExtension('amp-consent', '0.1', {hasCss: true});
 declareExtension('amp-crypto-polyfill', '0.1');
 declareExtension('amp-dailymotion', '0.1');
-declareExtension('amp-document-recommendations', '0.1', {hasCss: true});
 declareExtension('amp-dynamic-css-classes', '0.1');
 declareExtension('amp-experiment', '0.1');
 declareExtension('amp-facebook', '0.1');
@@ -134,6 +133,7 @@ declareExtension('amp-list', '0.1');
 declareExtension('amp-live-list', '0.1', {hasCss: true});
 declareExtension('amp-mathml', '0.1', {hasCss: true});
 declareExtension('amp-mustache', '0.1');
+declareExtension('amp-next-page', '0.1', {hasCss: true});
 declareExtension('amp-nexxtv-player', '0.1');
 declareExtension('amp-o2-player', '0.1');
 declareExtension('amp-ooyala-player', '0.1');
@@ -149,7 +149,7 @@ declareExtension('amp-sidebar', '0.1', {hasCss: true});
 declareExtension('amp-soundcloud', '0.1');
 declareExtension('amp-springboard-player', '0.1');
 declareExtension('amp-sticky-ad', '1.0', {hasCss: true});
-declareExtension('amp-story', '0.1', {
+declareExtension('amp-story', '1.0', {
   hasCss: true,
   cssBinaries: [
     'amp-story-bookend',
@@ -203,6 +203,18 @@ declareExtension('amp-vk', '0.1');
 declareExtension('amp-youtube', '0.1');
 declareExtensionVersionAlias(
     'amp-sticky-ad', '0.1', /* latestVersion */ '1.0', {hasCss: true});
+declareExtensionVersionAlias(
+    'amp-story', '0.1', /* latestVersion */ '1.0', {
+      hasCss: true,
+      cssBinaries: [
+        'amp-story-bookend',
+        'amp-story-hint',
+        'amp-story-unsupported-browser-layer',
+        'amp-story-viewport-warning-layer',
+        'amp-story-share',
+        'amp-story-system-layer',
+      ],
+    });
 
 
 /**
@@ -812,14 +824,15 @@ function performBuild(watch) {
  */
 function checkBinarySize(compiled) {
   const file = compiled ? './dist/v0.js' : './dist/amp.js';
-  const size = compiled ? '76.2kB' : '332.6kB';
+  const size = compiled ? '76.79KB' : '334.46KB';
   const cmd = `npx bundlesize -f "${file}" -s "${size}"`;
   log(green('Running ') + cyan(cmd) + green('...\n'));
   const p = exec(cmd);
   if (p.status != 0) {
     log(red('ERROR:'), cyan('bundlesize'), 'found that amp.js/v0.js has ' +
         'exceeded its size cap. This is part of a new effort to reduce ' +
-        'AMP\'s binary size (#14392). Please contact @choumx for assistance.');
+        'AMP\'s binary size (#14392). Please contact @choumx or @jridgewell ' +
+        'for assistance.');
     // Terminate Travis builds on failure.
     if (process.env.TRAVIS) {
       process.exit(p.status);
