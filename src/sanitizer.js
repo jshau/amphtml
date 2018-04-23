@@ -156,7 +156,7 @@ const BLACKLISTED_ATTR_VALUES = [
 /** @const {!Object<string, !Object<string, !RegExp>>} */
 const BLACKLISTED_TAG_SPECIFIC_ATTR_VALUES = dict({
   'input': {
-    'type': /(?:image|file|password|button)/i,
+    'type': /(?:image|file|button)/i,
   },
 });
 
@@ -198,7 +198,8 @@ const INVALID_INLINE_STYLE_REGEX =
  * @return {string}
  */
 export function sanitizeHtml(html) {
-  const tagPolicy = htmlSanitizer.makeTagPolicy();
+  const tagPolicy = htmlSanitizer.makeTagPolicy(parsed =>
+    parsed.getScheme() === 'https' ? parsed : null);
   const output = [];
   let ignore = 0;
 

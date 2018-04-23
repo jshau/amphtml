@@ -26,7 +26,7 @@ min_validator_revision_required: 322
 # newer versions of the spec file. This is currently a Google internal
 # mechanism, validator.js does not use this facility. However, any
 # change to this file (validator-main.js) requires updating this revision id.
-spec_file_revision: 604
+spec_file_revision: 610
 
 styles_spec_url: "https://www.ampproject.org/docs/guides/author-develop/responsive/style_pages"
 script_spec_url: "https://www.ampproject.org/docs/reference/spec#html-tags"
@@ -3197,7 +3197,10 @@ tags {  # <form method=GET ...>
   attrs: { name: "autocomplete" }
   attrs: {
     name: "custom-validation-reporting"
-    value_regex: "(show-first-on-submit|show-all-on-submit|as-you-go|interact-and-submit)"
+    value_regex: "(as-you-go|"
+                  "interact-and-submit|"
+                  "show-all-on-submit|"
+                  "show-first-on-submit)"
   }
   attrs: { name: "enctype" }
   attrs: {
@@ -3245,7 +3248,10 @@ tags {  # <form method=POST ...>
   attrs: { name: "autocomplete" }
   attrs: {
     name: "custom-validation-reporting"
-    value_regex: "(show-first-on-submit|show-all-on-submit|as-you-go)"
+    value_regex: "(as-you-go|"
+                  "interact-and-submit|"
+                  "show-all-on-submit|"
+                  "show-first-on-submit)"
   }
   attrs: { name: "enctype" }
   attrs: {
@@ -3293,9 +3299,9 @@ tags {  # <form method=GET ...>
   attrs: {
     name: "custom-validation-reporting"
     value_regex: "(as-you-go|"
-        "interact-and-submit|"
-        "show-all-on-submit|"
-        "show-first-on-submit)"
+                  "interact-and-submit|"
+                  "show-all-on-submit|"
+                  "show-first-on-submit)"
   }
   attrs: { name: "enctype" }
   attrs: {
@@ -3337,8 +3343,9 @@ tags {  # <form method=POST ...>
   attrs: {
     name: "custom-validation-reporting"
     value_regex: "(as-you-go|"
-        "show-all-on-submit|"
-        "show-first-on-submit)"
+                  "interact-and-submit|"
+                  "show-all-on-submit|"
+                  "show-first-on-submit)"
   }
   attrs: { name: "enctype" }
   attrs: {
@@ -3418,6 +3425,58 @@ tags {
     name: "template"
     mandatory: true
   }
+}
+attr_lists: {
+  name: "input-common-attr"
+  attrs: { name: "accept" }
+  attrs: { name: "accesskey" }
+  attrs: { name: "autocomplete" }
+  attrs: { name: "autofocus" }
+  attrs: { name: "checked" }
+  attrs: { name: "disabled" }
+  attrs: { name: "height" }
+  attrs: { name: "inputmode" }
+  attrs: { name: "list" }
+  attrs: { name: "max" }
+  attrs: { name: "maxlength" }
+  attrs: { name: "min" }
+  attrs: { name: "minlength" }
+  attrs: { name: "multiple" }
+  attrs: { name: "pattern" }
+  attrs: { name: "placeholder" }
+  attrs: { name: "readonly" }
+  attrs: { name: "required" }
+  attrs: { name: "selectiondirection" }
+  attrs: { name: "size" }
+  attrs: { name: "spellcheck" }
+  attrs: { name: "step" }
+  attrs: { name: "tabindex" }
+  attrs: { name: "value" }
+  attrs: { name: "width" }
+  # <amp-bind>
+  attrs: { name: "[accept]" }
+  attrs: { name: "[accesskey]" }
+  attrs: { name: "[autocomplete]" }
+  attrs: { name: "[checked]" }
+  attrs: { name: "[disabled]" }
+  attrs: { name: "[height]" }
+  attrs: { name: "[inputmode]" }
+  attrs: { name: "[max]" }
+  attrs: { name: "[maxlength]" }
+  attrs: { name: "[min]" }
+  attrs: { name: "[minlength]" }
+  attrs: { name: "[multiple]" }
+  attrs: { name: "[pattern]" }
+  attrs: { name: "[placeholder]" }
+  attrs: { name: "[readonly]" }
+  attrs: { name: "[required]" }
+  attrs: { name: "[selectiondirection]" }
+  attrs: { name: "[size]" }
+  attrs: { name: "[spellcheck]" }
+  attrs: { name: "[step]" }
+  attrs: { name: "[type]" }
+  attrs: { name: "[value]" }
+  attrs: { name: "[width]" }
 }
 attr_lists: {
   name: "input-name-attr"
@@ -3551,29 +3610,6 @@ tags: {
 # 4.10.5 The input element
 tags: {
   tag_name: "INPUT"
-  attrs: { name: "accept" }
-  attrs: { name: "accesskey" }
-  attrs: { name: "autocomplete" }
-  attrs: { name: "autofocus" }
-  attrs: { name: "checked" }
-  attrs: { name: "disabled" }
-  attrs: { name: "height" }
-  attrs: { name: "inputmode" }
-  attrs: { name: "list" }
-  attrs: { name: "max" }
-  attrs: { name: "maxlength" }
-  attrs: { name: "min" }
-  attrs: { name: "minlength" }
-  attrs: { name: "multiple" }
-  attrs: { name: "pattern" }
-  attrs: { name: "placeholder" }
-  attrs: { name: "readonly" }
-  attrs: { name: "required" }
-  attrs: { name: "selectiondirection" }
-  attrs: { name: "size" }
-  attrs: { name: "spellcheck" }
-  attrs: { name: "step" }
-  attrs: { name: "tabindex" }
   attrs: {
     name: "type"
     blacklisted_value_regex: "(^|\\s)("  # Values are space separated.
@@ -3583,33 +3619,23 @@ tags: {
         "password|"
         ")(\\s|$)"
   }
-  attrs: { name: "value" }
-  attrs: { name: "width" }
-  # <amp-bind>
-  attrs: { name: "[accept]" }
-  attrs: { name: "[accesskey]" }
-  attrs: { name: "[autocomplete]" }
-  attrs: { name: "[checked]" }
-  attrs: { name: "[disabled]" }
-  attrs: { name: "[height]" }
-  attrs: { name: "[inputmode]" }
-  attrs: { name: "[max]" }
-  attrs: { name: "[maxlength]" }
-  attrs: { name: "[min]" }
-  attrs: { name: "[minlength]" }
-  attrs: { name: "[multiple]" }
-  attrs: { name: "[pattern]" }
-  attrs: { name: "[placeholder]" }
-  attrs: { name: "[readonly]" }
-  attrs: { name: "[required]" }
-  attrs: { name: "[selectiondirection]" }
-  attrs: { name: "[size]" }
-  attrs: { name: "[spellcheck]" }
-  attrs: { name: "[step]" }
-  attrs: { name: "[type]" }
-  attrs: { name: "[value]" }
-  attrs: { name: "[width]" }
+  attr_lists: "input-common-attr"
   attr_lists: "input-name-attr"
+  spec_url: "https://www.ampproject.org/docs/reference/components/amp-form"
+}
+tags: {
+  html_format: AMP
+  tag_name: "INPUT"
+  spec_name: "INPUT [type=password]"
+  attrs: {
+    name: "type"
+    value_casei: "password"
+    mandatory: true
+    dispatch_key: NAME_VALUE_DISPATCH
+  }
+  attr_lists: "input-common-attr"
+  attr_lists: "input-name-attr"
+  mandatory_ancestor: "FORM [method=POST]"
   spec_url: "https://www.ampproject.org/docs/reference/components/amp-form"
 }
 # 4.10.6 The button element
@@ -4505,7 +4531,7 @@ attr_lists: {
   # https://www.ampproject.org/docs/reference/components/amp-fx-collection
   attrs: {
     name: "amp-fx"
-    value_regex_casei: "(fade-in|parallax)"
+    value_regex_casei: "(fade-in|fade-in-scroll|parallax)"
     requires_extension: "amp-fx-collection"
   }
   # amp-subscriptions specific attributes, see

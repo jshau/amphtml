@@ -19,7 +19,7 @@ import {
 } from '../../../../src/service/position-observer/position-observer-worker';
 import {Presets} from './amp-fx-presets';
 import {Services} from '../../../../src/services';
-import {convertEasingKeyword} from './amp-fx-presets-utils';
+import {convertEasingKeyword, resolvePercentageToNumber} from './amp-fx-presets-utils';
 import {getServiceForDoc} from '../../../../src/service';
 import {
   installPositionObserverServiceForDoc,
@@ -33,9 +33,26 @@ const installStyles = {
   'fade-in': {
     'will-change': 'opacity',
     'opacity': 0,
-
+  },
+  'fade-in-scroll': {
+    'will-change': 'opacity',
+    'opacity': 0,
   },
 };
+
+const marginValues = {
+  'parallax': {
+    'start': 0,
+  },
+  'fade-in': {
+    'start': 0.05,
+  },
+  'fade-in-scroll': {
+    'start': 0,
+    'end': 0.5,
+  },
+};
+
 
 /**
  * Class that implements the various preset animation providers.
@@ -120,8 +137,14 @@ export class FxElement {
     this.factor_ = parseFloat(element.getAttribute('data-parallax-factor'));
 
     /** @private {number} */
-    this.margin_ = element.hasAttribute('data-margin') ?
-      parseFloat(element.getAttribute('data-margin')) : 0.05;
+    this.marginStart_ = element.hasAttribute('data-margin-start') ?
+      resolvePercentageToNumber(element.getAttribute('data-margin-start')) :
+      marginValues[this.fxType_]['start'];
+
+    /** @private {number} */
+    this.marginEnd_ = element.hasAttribute('data-margin-end') ?
+      resolvePercentageToNumber(element.getAttribute('data-margin-end')) :
+      marginValues[this.fxType_]['end'];
 
     /** @private {string} */
     this.easing_ = convertEasingKeyword(element.hasAttribute('data-easing') ?
@@ -130,6 +153,10 @@ export class FxElement {
     /** @private {string} */
     this.duration_ = element.hasAttribute('data-duration') ?
       element.getAttribute('data-duration') : '1000ms';
+
+    /** @private {boolean} */
+    this.hasRepeat_ = element.hasAttribute('data-repeat');
+
   }
 
   /**
@@ -202,8 +229,15 @@ export class FxElement {
   /**
    * @returns {number}
    */
-  getMargin() {
-    return this.margin_;
+  getMarginStart() {
+    return this.marginStart_;
+  }
+
+  /**
+   * @returns {number}
+   */
+  getMarginEnd() {
+    return this.marginEnd_;
   }
 
   /**
@@ -246,6 +280,16 @@ export class FxElement {
    */
   isMutateScheduled() {
     return this.mutateScheduled_;
+  }
+
+  /**
+   * Boolean dictating whether or not the amp-fx preset has the `repeat`
+   * attribute set. The `repeat` attribute allows the animation to be fully
+   * dependent on scroll.
+   * @returns {boolean}
+   */
+  hasRepeat() {
+    return this.hasRepeat_;
   }
 
   /**
