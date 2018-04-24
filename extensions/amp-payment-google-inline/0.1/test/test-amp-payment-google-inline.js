@@ -391,6 +391,33 @@ describes.realWin(
            });
          });
 
+      it('should call logPaymentData if requested by iframe', function() {
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('getInlinePaymentIframeUrl', {})
+            .returns(Promise.resolve(IFRAME_URL));
+        viewerMock.sendMessage.withArgs('logPaymentData', {}).returns();
+
+        // Send intial status change event for initiating the iframe component.
+        window.postMessage(
+            {
+              message: 'paymentReadyStatusChanged',
+              data: {},
+            },
+            '*');
+
+        return getAmpPaymentGoogleInline().then(gPayInline => {
+          const iframes = gPayInline.getElementsByTagName('iframe');
+          expect(iframes.length).to.equal(1);
+
+          window.postMessage(
+              {
+                message: 'logPaymentData',
+                data: {},
+              },
+              '*');
+        });
+      });
+
       function getAmpPaymentGoogleInline(opt_isTestMode) {
         const form = doc.createElement('form');
         form.setAttribute('method', 'post');
@@ -423,3 +450,4 @@ describes.realWin(
             .then(() => inline);
       }
     });
+
