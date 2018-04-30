@@ -175,8 +175,10 @@ export class AmpState extends AMP.BaseElement {
     state[id] = json;
     Services.bindForDocOrNull(this.element).then(bind => {
       dev().assert(bind, 'Bind service can not be found.');
+      // Always evaluate state even for initial remote fetches.
+      // TODO(williamsjosh): Figure out a better long term solution for this.
       bind.setState(state,
-          /* opt_skipEval */ isInit, /* opt_isAmpStateMutation */ !isInit);
+          /* opt_skipEval */ false, /* opt_isAmpStateMutation */ !isInit);
     });
   }
 
