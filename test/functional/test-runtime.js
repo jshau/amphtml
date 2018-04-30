@@ -535,7 +535,7 @@ describes.fakeWin('runtime', {
       const servicePromise = getServicePromise(win, 'amp-ext');
       const installStylesStub = sandbox.stub(styles, 'installStylesForDoc');
 
-      ampdoc.declareExtension_('amp-ext');
+      ampdoc.declareExtension('amp-ext');
       win.AMP.push({
         n: 'amp-ext',
         f: amp => {
@@ -573,7 +573,7 @@ describes.fakeWin('runtime', {
                 installStylesCallback = cb;
               });
 
-      ampdoc.declareExtension_('amp-ext');
+      ampdoc.declareExtension('amp-ext');
       win.AMP.push({
         n: 'amp-ext',
         f: amp => {
@@ -612,7 +612,7 @@ describes.fakeWin('runtime', {
     it('should register doc-service as ctor and install imm', function* () {
       class Service1 {}
       const ampdoc = new AmpDocSingle(win);
-      ampdoc.declareExtension_('amp-ext');
+      ampdoc.declareExtension('amp-ext');
       ampdocServiceMock.expects('getAmpDoc')
           .returns(ampdoc)
           .atLeast(1);
@@ -643,7 +643,7 @@ describes.fakeWin('runtime', {
         return {str: 'A'};
       }
       const ampdoc = new AmpDocSingle(win);
-      ampdoc.declareExtension_('amp-ext');
+      ampdoc.declareExtension('amp-ext');
       ampdocServiceMock.expects('getAmpDoc')
           .returns(ampdoc)
           .atLeast(1);
@@ -847,7 +847,7 @@ describes.realWin('runtime multidoc', {
       const shadowRoot = createShadowRoot(hostElement);
       ampdoc = new AmpDocShadow(win, docUrl, shadowRoot);
 
-      ampdocServiceMock.expects('installShadowDoc_')
+      ampdocServiceMock.expects('installShadowDoc')
           .withExactArgs(
               docUrl,
               sinon.match(arg => arg == getShadowRoot(hostElement)))
@@ -1171,7 +1171,7 @@ describes.realWin('runtime multidoc', {
       const shadowRoot = createShadowRoot(hostElement);
       ampdoc = new AmpDocShadow(win, docUrl, shadowRoot);
 
-      ampdocServiceMock.expects('installShadowDoc_')
+      ampdocServiceMock.expects('installShadowDoc')
           .withExactArgs(
               docUrl,
               sinon.match(arg => arg == getShadowRoot(hostElement)))
@@ -1518,7 +1518,7 @@ describes.realWin('runtime multidoc', {
       const shadowRoot = createShadowRoot(hostElement);
       const ampdoc = new AmpDocShadow(win, docUrl, shadowRoot);
 
-      ampdocServiceMock.expects('installShadowDoc_')
+      ampdocServiceMock.expects('installShadowDoc')
           .withExactArgs(
               docUrl,
               sinon.match(arg => arg == getShadowRoot(hostElement)))

@@ -108,7 +108,6 @@ import {installDocService} from '../src/service/ampdoc-impl';
 import {
   installBuiltinElements,
   installExtensionsService,
-  registerExtension,
 } from '../src/service/extensions-impl';
 import {
   resetScheduledElementForTesting,
@@ -694,9 +693,9 @@ class AmpFixture {
         const installer = extensionsBuffer[`${extensionId}:${version}`];
         if (installer) {
           if (env.ampdoc) {
-            env.ampdoc.declareExtension_(extensionId);
+            env.ampdoc.declareExtension(extensionId);
           }
-          registerExtension(env.extensions, extensionId, installer, win.AMP);
+          env.extensions.registerExtension(extensionId, installer, win.AMP);
         }
       });
     }
@@ -725,9 +724,9 @@ class AmpFixture {
             ' Make sure the module is imported');
       }
       if (env.ampdoc) {
-        env.ampdoc.declareExtension_(extensionId);
+        env.ampdoc.declareExtension(extensionId);
       }
-      registerExtension(env.extensions, extensionId, installer, win.AMP);
+      env.extensions.registerExtension(extensionId, installer, win.AMP);
     };
 
     /**
@@ -783,7 +782,7 @@ class AmpFixture {
       const ampdoc = ret.ampdoc;
       env.ampdoc = ampdoc;
       const promise = Promise.all([
-        env.extensions.installExtensionsInDoc_(ampdoc, extensionIds),
+        env.extensions.installExtensionsInDoc(ampdoc, extensionIds),
         ampdoc.whenReady(),
       ]);
       completePromise = completePromise ?
