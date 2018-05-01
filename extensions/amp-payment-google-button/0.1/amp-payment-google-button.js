@@ -18,6 +18,7 @@ import {ActionTrust} from '../../../src/action-trust';
 import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {Services} from '../../../src/services';
 import {createCustomEvent} from '../../../src/event-helper';
+import {setStyle, setStyles} from '../../../src/style';
 
 /** @const {string} */
 const TAG = 'amp-payment-google-button';
@@ -66,23 +67,24 @@ function createButton(options = {}) {
       LONG_BUTTON_SVG :
       SHORT_BUTTON_SVG;
     const width = options.buttonType == ButtonType.LONG ? '240px' : '160px';
-    const styles = [
-      'background-color:#fff;', `background-image:${backgroundImage};`,
-      'background-position:center;', 'background-origin:content-box;',
-      'background-repeat:no-repeat;', 'background-size:contain;',
-      'box-shadow:0 1px 3px 0 #6d6d6d;', 'border:0;', 'border-radius:4px;',
-      'cursor:pointer;', 'height:40px;', 'outline:0;', 'padding:10px 0;',
-      `width:${width};`,
-    ];
-    button.setAttribute('style', styles.join(''));
+    const styles = {
+      'background-color': '#fff', 'background-image': backgroundImage,
+      'background-position': 'center', 'background-origin': 'content-box',
+      'background-repeat': 'no-repeat', 'background-size': 'contain',
+      'box-shadow': '0 1px 3px 0 #6d6d6d', 'border': '0',
+      'border-radius': '4px', 'cursor': 'pointer', 'height': '40px',
+      'outline': '0', 'padding': '10px 0', 'width': width,
+    };
+    setStyles(button, styles);
     button.addEventListener('focus', function() {
-      button.style.boxShadow = '0 1px 3px 0 #6d6d6d, inset 0 0 0 1px #a8abb3';
+      setStyle(button, 'boxShadow',
+          '0 1px 3px 0 #6d6d6d, inset 0 0 0 1px #a8abb3');
     });
     button.addEventListener('mousedown', function() {
-      button.style.backgroundColor = '#e7e8e8';
+      setStyle(button, 'backgroundColor', '#e7e8e8');
     });
     button.addEventListener('mouseup', function() {
-      button.style.backgroundColor = '#fff';
+      setStyle(button, 'backgroundColor', '#fff');
     });
     if (options.onClick) {
       button.addEventListener('click', options.onClick);

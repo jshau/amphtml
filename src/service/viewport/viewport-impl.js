@@ -427,7 +427,7 @@ export class Viewport {
    * @return {!../../layout-rect.LayoutRectDef}
    */
   getLayoutRectWithinViewport(el) {
-     return this.binding_.getLayoutRect(el, 0, 0);
+    return this.binding_.getLayoutRect(el, 0, 0);
   }
 
   /**

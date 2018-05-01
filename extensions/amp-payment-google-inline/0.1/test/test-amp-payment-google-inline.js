@@ -326,70 +326,70 @@ describes.realWin(
       });
 
       it('should reply validation viewer request from frame in trusted viewer',
-         function() {
-           viewerMock.sendMessageAwaitResponse
-               .withArgs('getInlinePaymentIframeUrl', {})
-               .returns(Promise.resolve(IFRAME_URL));
-           viewerMock.isTrustedViewer.returns(Promise.resolve(true));
+          function() {
+            viewerMock.sendMessageAwaitResponse
+                .withArgs('getInlinePaymentIframeUrl', {})
+                .returns(Promise.resolve(IFRAME_URL));
+            viewerMock.isTrustedViewer.returns(Promise.resolve(true));
 
-           // Send intial status change event for initiating the iframe
-           // component.
-           window.postMessage(
-               {
-                 message: 'paymentReadyStatusChanged',
-                 data: {},
-               },
-               '*');
+            // Send intial status change event for initiating the iframe
+            // component.
+            window.postMessage(
+                {
+                  message: 'paymentReadyStatusChanged',
+                  data: {},
+                },
+                '*');
 
 
-           return getAmpPaymentGoogleInline().then(gPayInline => {
-             const iframes = gPayInline.getElementsByTagName('iframe');
-             expect(iframes.length).to.equal(1);
-             iframeMock.sendIframeMessage.withArgs(
-                 iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
-                 {'result': true});
+            return getAmpPaymentGoogleInline().then(gPayInline => {
+              const iframes = gPayInline.getElementsByTagName('iframe');
+              expect(iframes.length).to.equal(1);
+              iframeMock.sendIframeMessage.withArgs(
+                  iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
+                  {'result': true});
 
-             window.postMessage(
-                 {
-                   message: 'validateViewer',
-                   data: {},
-                 },
-                 '*');
-           });
-         });
+              window.postMessage(
+                  {
+                    message: 'validateViewer',
+                    data: {},
+                  },
+                  '*');
+            });
+          });
 
       it('should not reply validation viewer in non-trusted viewer',
-         function() {
-           viewerMock.sendMessageAwaitResponse
-               .withArgs('getInlinePaymentIframeUrl', {})
-               .returns(Promise.resolve(IFRAME_URL));
-           viewerMock.isTrustedViewer.returns(Promise.resolve(false));
+          function() {
+            viewerMock.sendMessageAwaitResponse
+                .withArgs('getInlinePaymentIframeUrl', {})
+                .returns(Promise.resolve(IFRAME_URL));
+            viewerMock.isTrustedViewer.returns(Promise.resolve(false));
 
-           // Send intial status change event for initiating the iframe
-           // component.
-           window.postMessage(
-               {
-                 message: 'paymentReadyStatusChanged',
-                 data: {},
-               },
-               '*');
+            // Send intial status change event for initiating the iframe
+            // component.
+            window.postMessage(
+                {
+                  message: 'paymentReadyStatusChanged',
+                  data: {},
+                },
+                '*');
 
 
-           return getAmpPaymentGoogleInline().then(gPayInline => {
-             const iframes = gPayInline.getElementsByTagName('iframe');
-             expect(iframes.length).to.equal(1);
-             iframeMock.sendIframeMessage.withArgs(
-                 iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
-                 {'result': false});
+            return getAmpPaymentGoogleInline().then(gPayInline => {
+              const iframes = gPayInline.getElementsByTagName('iframe');
+              expect(iframes.length).to.equal(1);
+              iframeMock.sendIframeMessage.withArgs(
+                  iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
+                  {'result': false});
 
-             window.postMessage(
-                 {
-                   message: 'validateViewer',
-                   data: {},
-                 },
-                 '*');
-           });
-         });
+              window.postMessage(
+                  {
+                    message: 'validateViewer',
+                    data: {},
+                  },
+                  '*');
+            });
+          });
 
       function getAmpPaymentGoogleInline(opt_isTestMode) {
         const form = doc.createElement('form');

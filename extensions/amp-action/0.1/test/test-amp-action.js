@@ -86,7 +86,7 @@ describes.fakeWin('ActionService', {
     element.textContent = JSON.stringify(config);
     const service = new ActionService(ampdoc);
     const sendMessageStub = sandbox.stub(
-      service.viewer_, 'sendMessageAwaitResponse');
+        service.viewer_, 'sendMessageAwaitResponse');
     sendMessageStub.returns(Promise.reject());
     const invocation = new ActionInvocation(element, 'signIn');
     service.actionHandler_(invocation);
@@ -110,22 +110,22 @@ describes.fakeWin('ActionService', {
     };
     service.start_();
     const sendMessageStub = sandbox.stub(
-      service.viewer_, 'sendMessageAwaitResponse');
+        service.viewer_, 'sendMessageAwaitResponse');
     sendMessageStub.returns(Promise.resolve('fake_token'));
 
     const urlReplacements = Services.urlReplacementsForDoc(ampdoc);
     return urlReplacements
         .expandUrlAsync('https://foo.com/bar?access_token=IDENTITY_TOKEN')
-        .then((url) => {
+        .then(url => {
           expect(url).to.equal('https://foo.com/bar?access_token=fake_token');
           expect(sendMessageStub).to.be.calledOnce;
           expect(sendMessageStub.firstCall.args[0]).to.equal(
-            'getAccessTokenPassive');
+              'getAccessTokenPassive');
           expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
             providers: ['actions-on-google-gsi'],
           });
           expect(document.documentElement).to.have.class(
-            'amp-action-identity-available');
+              'amp-action-identity-available');
           expect(document.documentElement).not.to.have.class(
               'amp-action-identity-unavailable');
         });
@@ -144,22 +144,22 @@ describes.fakeWin('ActionService', {
     };
     service.start_();
     const sendMessageStub = sandbox.stub(
-      service.viewer_, 'sendMessageAwaitResponse');
+        service.viewer_, 'sendMessageAwaitResponse');
     sendMessageStub.returns(Promise.reject());
 
     const urlReplacements = Services.urlReplacementsForDoc(ampdoc);
     return urlReplacements
         .expandUrlAsync('https://foo.com/bar?access_token=IDENTITY_TOKEN')
-        .then((url) => {
+        .then(url => {
           expect(url).to.equal('https://foo.com/bar?access_token=');
           expect(sendMessageStub).to.be.calledOnce;
           expect(sendMessageStub.firstCall.args[0]).to.equal(
-            'getAccessTokenPassive');
+              'getAccessTokenPassive');
           expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
             providers: ['actions-on-google-gsi'],
           });
           expect(document.documentElement).not.to.have.class(
-            'amp-action-identity-available');
+              'amp-action-identity-available');
           expect(document.documentElement).to.have.class(
               'amp-action-identity-unavailable');
         });
