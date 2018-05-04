@@ -27,6 +27,12 @@ const PAYMENT_DATA_INPUT_ID_ATTRIBUTE_ = 'data-payment-data-input-id';
 /** @const {string} */
 const PAYMENT_READY_STATUS_CHANGED = 'paymentReadyStatusChanged';
 
+/** @const {number} */
+const GOOGLE_PAY_LOG_INLINE_PAYMENT_WIDGET_INITIALIZE = 4;
+
+/** @const {number} */
+const GOOGLE_PAY_TYPE_AMP_INLINE = 8;
+
 class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
   /** @param {!AmpElement} element */
   constructor(element) {
@@ -46,6 +52,9 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     this.iframeReadyPromise_ = new Promise(resolve => {
       this.iframeReadyResolver_ = resolve;
     });
+
+    /** @private {number} */
+    this.iframeInitializeLatency_ = Date.now();
   }
 
   /** @override */
@@ -136,6 +145,11 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
       if (this.iframeReadyResolver_) {
         this.iframeReadyResolver_();
         this.iframeReadyResolver_ = null;
+        this.sendLogDataMessage_({
+          'eventType': GOOGLE_PAY_LOG_INLINE_PAYMENT_WIDGET_INITIALIZE,
+          'clientLatencyStartMs': this.iframeInitializeLatency_,
+          'buyFlowMode': GOOGLE_PAY_TYPE_AMP_INLINE,
+        });
       }
       const name = PAYMENT_READY_STATUS_CHANGED;
       const customEvent =
@@ -153,6 +167,8 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
             this.iframe_, this.iframeOrigin_, 'validateViewerReply',
             {'result': result});
       });
+    } else if (event.data.message === 'logPaymentData') {
+      this.sendLogDataMessage_(event.data.data);
     }
   }
 
@@ -218,6 +234,14 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
       transition: resizeRequest['transition'],
       height: resizeRequest['frameHeight'] + 'px',
     });
+  }
+
+  /**
+   * @param {!Object} data
+   * @private
+   */
+  sendLogDataMessage_(data) {
+    this.viewer.sendMessage('logPaymentData', data);
   }
 
   /** @override */
