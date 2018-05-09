@@ -83,13 +83,13 @@ class AmpWorker {
       loc = win.testLocation;
     }
     let url;
-    if (getMode().localDev) {
+    const isTest = getMode().test;
+    if (getMode().localDev && !isTest) {
       // This is a hack to make local development work correctly with our AMP action samples.
       const ampJsUrl = this.win_.document.querySelector(
           'script[src$="/amp.js"]').src;
       url = ampJsUrl.replace('/amp.js', '/ww.max.js');
     } else {
-      const isTest = getMode().test;
       const useRtvVersion = !isTest;
       url = calculateEntryPointScriptUrl(
           loc, 'ww', isTest, useRtvVersion);
