@@ -106,6 +106,9 @@ export class AmpLightboxGallery extends AMP.BaseElement {
     this.isActive_ = false;
 
     /** @private {number} */
+    this.historyId_ = -1;
+
+    /** @private {number} */
     this.currentElemId_ = -1;
 
     /** @private {function(!Event)} */
@@ -118,6 +121,9 @@ export class AmpLightboxGallery extends AMP.BaseElement {
 
     /** @private {?../../../src/service/vsync-impl.Vsync} */
     this.vsync_ = null;
+
+    /** @private {?../../../src/service/history-impl.History}*/
+    this.history_ = null;
 
     /** @private {?../../../src/service/action-impl.ActionService} */
     this.action_ = null;
@@ -157,9 +163,6 @@ export class AmpLightboxGallery extends AMP.BaseElement {
     /** @private  {?Element} */
     this.topBar_ = null;
 
-    /** @private  {?Element} */
-    this.topGradient_ = null;
-
     /** @private {!LightboxControlsModes} */
     this.controlsMode_ = LightboxControlsModes.CONTROLS_DISPLAYED;
 
@@ -184,6 +187,7 @@ export class AmpLightboxGallery extends AMP.BaseElement {
         `Experiment ${TAG} disabled`);
     this.manager_ = dev().assert(manager_);
     this.vsync_ = this.getVsync();
+    this.history_ = Services.historyForDoc(this.getAmpDoc());
     this.action_ = Services.actionServiceForDoc(this.element);
     const viewer = Services.viewerForDoc(this.getAmpDoc());
     viewer.whenFirstVisible().then(() => {
@@ -522,8 +526,8 @@ export class AmpLightboxGallery extends AMP.BaseElement {
       prevButton.classList.add('i-amphtml-screen-reader');
       nextButton.classList.add('i-amphtml-screen-reader');
     }
-    this.navControls_.appendChild(nextButton);
     this.navControls_.appendChild(prevButton);
+    this.navControls_.appendChild(nextButton);
     this.controlsContainer_.appendChild(this.navControls_);
   }
   /**
@@ -727,7 +731,11 @@ export class AmpLightboxGallery extends AMP.BaseElement {
       user().assert(target,
           'amp-lightbox-gallery.open: element with id: %s not found', targetId);
     }
-    this.open_(dev().assertElement(target));
+    this.open_(dev().assertElement(target)).then(() => {
+      return this.history_.push(this.close_.bind(this));
+    }).then(historyId => {
+      this.historyId_ = historyId;
+    });
   }
 
   /**
@@ -1224,6 +1232,9 @@ export class AmpLightboxGallery extends AMP.BaseElement {
           this.schedulePause(dev().assertElement(this.container_));
           this.pauseLightboxChildren_();
           this.carousel_ = null;
+          if (this.historyId_ != -1) {
+            this.history_.pop(this.historyId_);
+          }
         });
   }
 

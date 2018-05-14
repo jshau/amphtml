@@ -552,7 +552,17 @@ app.post('/get-consent-v1/', (req, res) => {
   assertCors(req, res, ['POST']);
   const body = {
     'promptIfUnknown': true,
+    'sharedData': {
+      'tfua': true,
+      'coppa': true,
+    },
   };
+  res.json(body);
+});
+
+app.post('/get-consent-no-prompt/', (req, res) => {
+  assertCors(req, res, ['POST']);
+  const body = {};
   res.json(body);
 });
 
@@ -873,8 +883,11 @@ app.use('/subscription/:id/entitlements', (req, res) => {
   assertCors(req, res, ['GET']);
   res.json({
     source: 'local' + req.params.id,
-    products: ['scenic-2017.appspot.com:news',
-      'scenic-2017.appspot.com:product2'],
+    granted: true,
+    grantedReason: 'NOT_SUBSCRIBED',
+    data: {
+      login: true,
+    },
   });
 });
 

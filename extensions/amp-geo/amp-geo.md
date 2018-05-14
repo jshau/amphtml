@@ -29,6 +29,10 @@ limitations under the License.
     <td class="col-fourty"><strong><a href="https://www.ampproject.org/docs/guides/responsive/control_layout.html">Supported Layouts</a></strong></td>
     <td>nodisplay</td>
   </tr>
+  <tr>
+    <td class="col-fourty"><strong>Availability</td>
+    <td>Available for testing</td>
+  </tr>
 </table>
 
 [TOC]
@@ -126,6 +130,24 @@ Then it's trivial to use CSS select the correct word (i.e., football).
 The game is called <span class='football'></span>!
 </div>
 ```
+
+### Render Blocking
+
+By default, the `amp-geo` component is not render blocking. That is, the page will load and elements will render even if `amp-geo` has not yet loaded and executed. If it's important that certain elements are never rendered in a specific geography, use the `amp-geo-pending` class to provide selective render blocking. This is implemented by the publisher by adding `amp-geo-pending` to the `<body>` element. When the `amp-geo` script loads, it removes the `amp-geo-pending` class at the same time as it adds the `amp-iso-country...` and `amp-geo-group-...` classes.
+
+*Example*: To always suppress an element that has the `foo` class in the United States, set `<body class="amp-geo-pending">`, and in the CSS include the following:
+
+```css
+.amp-geo-pending .foo,
+.amp-iso-country-us .foo {
+  display: none;
+}
+```
+
+This CSS hides the element that has the `foo` class until `amp-geo` has loaded and continues to hide it if the country is `us`. 
+
+**Note**: Elements such as `amp-ad` and `amp-iframe` do not make external network requests when set to `display: none`.
+
 
 ### Integration with amp-bind
 

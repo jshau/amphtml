@@ -123,6 +123,9 @@ export class StandardActions {
 
       case 'print':
         return this.handleAmpPrint_(invocation);
+
+      case 'optoutOfCid':
+        return this.handleOptoutOfCid_(invocation);
     }
     throw user().createError('Unknown AMP action ', method);
   }
@@ -136,7 +139,7 @@ export class StandardActions {
     if (!invocation.satisfiesTrust(ActionTrust.HIGH)) {
       return null;
     }
-    return Services.bindForDocOrNull(invocation.target).then(bind => {
+    return Services.bindForDocOrNull(invocation.node).then(bind => {
       user().assert(bind, 'AMP-BIND is not installed.');
 
       const objectString = invocation.args[OBJECT_STRING_ARGS_KEY];
@@ -168,7 +171,7 @@ export class StandardActions {
     if (!invocation.satisfiesTrust(ActionTrust.HIGH)) {
       return null;
     }
-    const node = invocation.target;
+    const node = invocation.node;
     const win = (node.ownerDocument || node).defaultView;
     const url = invocation.args['url'];
     const requestedBy = `AMP.${invocation.method}`;
@@ -197,10 +200,25 @@ export class StandardActions {
     if (!invocation.satisfiesTrust(ActionTrust.HIGH)) {
       return null;
     }
-    const node = invocation.target;
+    const node = invocation.node;
     const win = (node.ownerDocument || node).defaultView;
     win.print();
     return null;
+  }
+
+  /**
+   * Opts the user out of cid issuance.
+   * @private
+   */
+  handleOptoutOfCid_(invocation) {
+    if (!invocation.satisfiesTrust(ActionTrust.HIGH)) {
+      return null;
+    }
+    return Services.cidForDoc(this.ampdoc)
+        .then(cid => cid.optOut())
+        .catch(reason => {
+          dev().error(TAG, 'Failed to opt out of Cid', reason);
+        });
   }
 
   /**
@@ -213,7 +231,7 @@ export class StandardActions {
     if (!invocation.satisfiesTrust(ActionTrust.HIGH)) {
       return null;
     }
-    const node = dev().assertElement(invocation.target);
+    const node = dev().assertElement(invocation.node);
 
     // Duration for scroll animation
     const duration = invocation.args
@@ -242,7 +260,7 @@ export class StandardActions {
     if (!invocation.satisfiesTrust(ActionTrust.HIGH)) {
       return null;
     }
-    const node = dev().assertElement(invocation.target);
+    const node = dev().assertElement(invocation.node);
 
     // Set focus
     tryFocus(node);
@@ -257,7 +275,7 @@ export class StandardActions {
    * @return {?Promise}
    */
   handleHide(invocation) {
-    const target = dev().assertElement(invocation.target);
+    const target = dev().assertElement(invocation.node);
 
     this.resources_.mutateElement(target, () => {
       if (target.classList.contains('i-amphtml-element')) {
@@ -277,7 +295,7 @@ export class StandardActions {
    * @return {?Promise}
    */
   handleShow(invocation) {
-    const target = dev().assertElement(invocation.target);
+    const target = dev().assertElement(invocation.node);
     const ownerWindow = toWin(target.ownerDocument.defaultView);
 
     if (target.classList.contains(getLayoutClass(Layout.NODISPLAY))) {
@@ -318,7 +336,7 @@ export class StandardActions {
    * @return {?Promise}
    */
   handleToggle(invocation) {
-    if (isShowable(dev().assertElement(invocation.target))) {
+    if (isShowable(dev().assertElement(invocation.node))) {
       return this.handleShow(invocation);
     } else {
       return this.handleHide(invocation);
