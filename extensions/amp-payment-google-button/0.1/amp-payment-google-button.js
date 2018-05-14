@@ -133,7 +133,6 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
     this.viewer.whenFirstVisible()
         .then(() => super.initializePaymentClient_())
         .then(() => {
-          this.prefetch_();
           this.render_();
         });
   }
@@ -142,16 +141,6 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
     this.element.appendChild(createButton({
       onClick: () => this.onClickButton_(),
     }));
-  }
-
-  /**
-   * Prefetch payment data to make loadPaymentData faster. Note that
-   * paymentDataRequest should be exactly same as in loadPaymentData to speed up
-   * the call.
-   */
-  prefetch_() {
-    this.viewer.sendMessage(
-        'prefetchPaymentData', this.getPaymentDataRequest_());
   }
 
   onClickButton_() {
