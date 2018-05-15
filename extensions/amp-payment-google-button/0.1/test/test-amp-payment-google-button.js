@@ -37,6 +37,9 @@ describes.realWin('amp-payment-google-button', {
     ]);
 
     viewerMock.whenFirstVisible.returns(Promise.resolve());
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('isReadyToPay', sinon.match.any)
+        .returns(Promise.resolve(true));
   });
 
   it('should call initialize payment client before render button', () => {
@@ -64,20 +67,16 @@ describes.realWin('amp-payment-google-button', {
   it('should not render button if initialize payment client fails', () => {
     viewerMock.sendMessageAwaitResponse
         .withArgs('initializePaymentClient', {isTestMode: true})
-        .returns(Promise.reject());
+        .returns(Promise.reject('initialize payment client fails'));
 
-    return getAmpPaymentGoogleButton(true /* isTestMode */).then(gPayButton => {
-      viewerMock.sendMessageAwaitResponse
-          .withArgs('loadPaymentData', sinon.match.any)
-          .returns(Promise.resolve({
-            paymentMethodToken: {
-              token: 'fakeToken',
+    return getAmpPaymentGoogleButton(true /* isTestMode */)
+        .then(
+            gPayButton => {
+              throw new Error('This should not be called');
             },
-          }));
-
-      const buttons = gPayButton.getElementsByTagName('button');
-      expect(buttons.length).to.equal(0);
-    });
+            error => {
+              expect(error).to.equal('initialize payment client fails');
+            });
   });
 
   it('loads a button and displays the selected instrument', () => {
@@ -107,6 +106,20 @@ describes.realWin('amp-payment-google-button', {
         trigger.restore();
       });
     });
+  });
+
+  it('should throw error if isReadyToPay returns false', () => {
+    viewerMock.sendMessageAwaitResponse
+        .withArgs('isReadyToPay', sinon.match.any)
+        .returns(Promise.resolve(false));
+
+    return getAmpPaymentGoogleButton().then(
+        gPayButton => {
+          throw new Error('This should not be called');
+        },
+        error => {
+          expect(error.message).to.equal('Google Pay is not supported');
+        });
   });
 
   function getAmpPaymentGoogleButton(opt_isTestMode) {

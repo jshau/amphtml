@@ -15,6 +15,7 @@
  */
 
 import '../amp-payment-google-inline';
+import * as sinon from 'sinon';
 import {AmpFormService} from '../../../../extensions/amp-form/0.1/amp-form';
 import {mockServiceForDoc} from '../../../../testing/test-helper';
 
@@ -66,6 +67,10 @@ describes.realWin(
         xhrMock = mockServiceForDoc(env.sandbox, env.ampdoc, 'xhr', [
           'fetch',
         ]);
+
+        viewerMock.sendMessageAwaitResponse
+        .withArgs('isReadyToPay', sinon.match.any)
+        .returns(Promise.resolve(true));
       });
 
       it('loads initialize payment client with isTestMode', () => {
@@ -416,6 +421,31 @@ describes.realWin(
               },
               '*');
         });
+      });
+
+      it('should throw error if isReadyToPay returns false', () => {
+        viewerMock.sendMessageAwaitResponse
+        .withArgs('isReadyToPay', sinon.match.any)
+        .returns(Promise.resolve(false));
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('getInlinePaymentIframeUrl', {})
+            .returns(Promise.resolve(IFRAME_URL));
+
+        // Send intial status change event for initiating the iframe component.
+        window.postMessage(
+            {
+              message: 'paymentReadyStatusChanged',
+              data: {},
+            },
+            '*');
+
+        return getAmpPaymentGoogleInline().then(
+            gPayInline => {
+              throw new Error('Should not be called');
+            },
+            error => {
+              expect(error).to.equal('Google Pay is not supported');
+            });
       });
 
       function getAmpPaymentGoogleInline(opt_isTestMode) {
