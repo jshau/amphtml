@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {ActionTrust} from '../../../src/action-trust';
+import {ActionTrust} from '../../../src/action-constants';
 import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {Services} from '../../../src/services';
 import {createCustomEvent} from '../../../src/event-helper';

@@ -1,4 +1,4 @@
-import {ActionTrust} from '../../../src/action-trust';
+import {ActionTrust} from '../../../src/action-constants';
 import {Services} from '../../../src/services';
 import {dev, user} from '../../../src/log';
 import {dict} from '../../../src/utils/object';

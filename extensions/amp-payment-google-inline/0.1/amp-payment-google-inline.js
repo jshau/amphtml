@@ -2,7 +2,7 @@
  * @fileoverview Tests for the amp-payment-google-inline extension.
  */
 
-import {ActionTrust} from '../../../src/action-trust';
+import {ActionTrust} from '../../../src/action-constants';
 import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {CSS} from '../../../build/amp-payment-google-inline-0.1.css';
 import {Layout} from '../../../src/layout';
