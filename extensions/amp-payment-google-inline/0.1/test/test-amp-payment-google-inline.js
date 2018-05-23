@@ -210,23 +210,8 @@ describes.realWin(
           expect(input.value).to.equal('');
 
           const formSubmitted = new Promise((resolve, reject) => {
-            xhrMock.fetch.callsFake(() => {
-              // Without this try-catch block, the nested promise swallows up
-              // any failed expectations and the test times out instead of
-              // failing.
-              try {
-                // Input value should still be empty as submit failed
-                expect(input.value).to.equal('');
-                resolve();
-              } catch (e) {
-                reject(e);
-              }
-
-              // Minimal mocked FetchResponse.
-              return {
-                json: () => Promise.resolve('{}'),
-              };
-            });
+            expect(input.value).to.equal('');
+            resolve();
           });
 
           const button = doc.getElementById(SUBMIT_BUTTON_ID);

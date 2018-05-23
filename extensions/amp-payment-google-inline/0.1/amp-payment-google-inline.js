@@ -12,7 +12,7 @@ import {createCustomEvent} from '../../../src/event-helper';
 import {formOrNullForElement} from '../../../src/form';
 import {getServiceForDoc} from '../../../src/service';
 import {map} from '../../../src/utils/object';
-import {parseUrl} from '../../../src/url';
+import {parseUrlDeprecated} from '../../../src/url';
 import {setStyles} from '../../../src/style';
 
 /** @const {string} */
@@ -113,7 +113,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
       this.iframe_.src = iframeSrc;
       this.iframe_.classList.add('google-pay-iframe');
       this.element.appendChild(this.iframe_);
-      this.iframeOrigin_ = parseUrl(iframeSrc).origin;
+      this.iframeOrigin_ = parseUrlDeprecated(iframeSrc).origin;
     }
 
     const enclosingForm = closestByTag(this.element, 'form');
