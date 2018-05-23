@@ -61,6 +61,18 @@ let PaymentDataRequestDef;
  */
 export let PaymentData;
 
+/**
+ * Request object of isReadyToPay.
+ *
+ * @typedef {{
+ *   allowedPaymentMethods: (?Array<string>|undefined),
+ * }}
+ *
+ * @property {Array<string>} allowedPaymentMethods The allowedPaymentMethods can
+ *     be 'CARD' or 'TOKENIZED_CARD'.
+ */
+export let IsReadyToPayRequest;
+
 /** @const {string} */
 const IS_TEST_MODE_ = 'is-test-mode';
 
@@ -118,6 +130,18 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
         'initializePaymentClient', {isTestMode});
   }
 
+  /**
+   * @protected
+   * @return {!Promise<(boolean|undefined)>} the response promise will contain
+   * the bollean result and error message
+   */
+  isReadyToPay_() {
+    const paymentDataRequest = this.getPaymentDataRequest_();
+    return this.viewer.sendMessageAwaitResponse(
+        'isReadyToPay',
+        {'allowedPaymentMethods': paymentDataRequest.allowedPaymentMethods});
+  }
+
   /*
    * @protected
    * @abstract
@@ -126,3 +150,4 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
     throw new Error('Must be implemented by subclass');
   }
 }
+

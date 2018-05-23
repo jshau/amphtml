@@ -48,9 +48,13 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
     /** @private {function()|null} */
     this.iframeReadyResolver_ = null;
 
+    /** @private {function()|null} */
+    this.iframeReadyRejector_ = null;
+
     /** @private {Promise} */
-    this.iframeReadyPromise_ = new Promise(resolve => {
+    this.iframeReadyPromise_ = new Promise((resolve, reject) => {
       this.iframeReadyResolver_ = resolve;
+      this.iframeReadyRejector_ = reject;
     });
 
     /** @private {number} */
@@ -67,13 +71,21 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
         .then(() => super.initializePaymentClient_())
         .then(
             () => {
-              return this.viewer.sendMessageAwaitResponse(
-                  'getInlinePaymentIframeUrl', this.getPaymentDataRequest_());
+              return super.isReadyToPay_();
             },
             error => {
               this.user().error(
                   'Initialize payment client failed with error: ' + error);
             })
+        .then(result => {
+          if (result) {
+            return this.viewer.sendMessageAwaitResponse(
+                'getInlinePaymentIframeUrl', this.getPaymentDataRequest_());
+          } else {
+            // Unblock layoutCallback.
+            this.iframeReadyRejector_('Google Pay is not supported');
+          }
+        })
         .then(data => this.render_(data));
   }
 
