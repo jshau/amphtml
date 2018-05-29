@@ -312,14 +312,13 @@ const command = {
     }
     // Unit tests with Travis' default chromium
     timedExecOrDie(cmd + ' --headless');
-    // TODO(rsimha, #14856): Re-enable after debugging Karma disconnects.
-    // if (process.env.TRAVIS) {
-    //   // A subset of unit tests on other browsers via sauce labs
-    //   cmd = cmd + ' --saucelabs_lite';
-    //   startSauceConnect();
-    //   timedExecOrDie(cmd);
-    //   stopSauceConnect();
-    // }
+    if (process.env.TRAVIS) {
+      // A subset of unit tests on other browsers via sauce labs
+      cmd = cmd + ' --saucelabs_lite';
+      startSauceConnect();
+      timedExecOrDie(cmd);
+      stopSauceConnect();
+    }
   },
   runUnitTestsOnLocalChanges: function() {
     timedExecOrDie('gulp test --nobuild --headless --local-changes');
@@ -565,8 +564,8 @@ function main() {
   const files = filesInPr();
   const buildTargets = determineBuildTargets(files);
 
-  // Exit early if flag-config files are mixed with non-flag-config files.
-  if (buildTargets.has('FLAG_CONFIG') && buildTargets.size !== 1) {
+  // Exit early if flag-config files are mixed with runtime files.
+  if (buildTargets.has('FLAG_CONFIG') && buildTargets.has('RUNTIME')) {
     console.log(fileLogPrefix, colors.red('ERROR:'),
         'Looks like your PR contains',
         colors.cyan('{prod|canary}-config.json'),

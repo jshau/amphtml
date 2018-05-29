@@ -218,8 +218,14 @@ const EXPERIMENTS = [
   },
   {
     id: 'amp-story',
-    name: 'Visual storytelling in AMP',
+    name: 'Visual storytelling in AMP (v0.1)',
     spec: 'https://github.com/ampproject/amphtml/issues/11329',
+    cleanupIssue: 'https://github.com/ampproject/amphtml/issues/14357',
+  },
+  {
+    id: 'amp-story-v1',
+    name: 'Visual storytelling in AMP (v1.0)',
+    spec: 'https://github.com/ampproject/amphtml/issues/14357',
     cleanupIssue: 'https://github.com/ampproject/amphtml/issues/11475',
   },
   {
@@ -296,11 +302,24 @@ const EXPERIMENTS = [
     cleanupIssue: 'https://github.com/ampproject/amphtml/issues/15158',
   },
   {
+    id: 'svg-in-mustache',
+    name: 'Enables SVG support in amp-mustache templates',
+    spec: 'https://github.com/ampproject/amphtml/issues/15123',
+    cleanupIssue: 'https://github.com/ampproject/amphtml/issues/15360',
+  },
+  {
     id: 'amp-fx-fly-in',
     name: 'Enables amp-fx="fly-in-{bottom,top,left,right}" - ' +
       'scroll triggered timed fly in animations',
     spec: 'https://github.com/ampproject/amphtml/issues/14150',
-    cleanupissue: 'https://github.com/ampproject/amphtml/issues/14325',
+    cleanupIssue: 'https://github.com/ampproject/amphtml/issues/14325',
+  },
+  {
+    id: 'disable-faster-amp-list',
+    name: 'Disables new default behavior where <amp-list> will not evaluate ' +
+       'bindings on rendered children before first setState() mutation.',
+    spec: 'https://github.com/ampproject/amphtml/issues/15311',
+    cleanupIssue: 'https://github.com/ampproject/amphtml/issues/15610',
   },
 ];
 
