@@ -16,6 +16,7 @@
 
 import {AmpViewerIntegrationVariableService} from './variable-service';
 import {FormEventHandler} from './form-event-handler';
+import {HighlightHandler, HighlightInfoDef, getHighlightParam} from './highlight-handler';
 import {
   Messaging,
   WindowPortEmulator,
@@ -65,6 +66,11 @@ export class AmpViewerIntegration {
     /** @private {boolean} */
     this.isHandShakePoll_ = false;
 
+    /**
+     * @private {?HighlightHandler}
+     */
+    this.highlightHandler_ = null;
+
     /** @const @private {!AmpViewerIntegrationVariableService} */
     this.variableService_ = new AmpViewerIntegrationVariableService(
         getAmpdoc(this.win.document));
@@ -98,6 +104,11 @@ export class AmpViewerIntegration {
             return this.openChannelAndStart_(viewer, ampdoc, origin,
                 new Messaging(this.win, receivedPort, this.isWebView_));
           });
+    }
+    /** @type {?HighlightInfoDef} */
+    const highlightInfo = getHighlightParam(ampdoc);
+    if (highlightInfo) {
+      this.highlightHandler_ = new HighlightHandler(ampdoc, highlightInfo);
     }
 
     const port = new WindowPortEmulator(
@@ -186,6 +197,9 @@ export class AmpViewerIntegration {
     }
     // TODO(williamsjosh): put this behind a capability check
     this.initFormEventHandler_(messaging);
+    if (this.highlightHandler_ != null) {
+      this.highlightHandler_.setupMessaging(messaging);
+    }
   }
 
   /**
