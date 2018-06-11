@@ -822,6 +822,7 @@ export class Viewport {
   /**
    * Updates touch zoom meta data. Returns `true` if any actual
    * changes have been done.
+   * @param {string} viewportMetaString
    * @return {boolean}
    */
   setViewportMetaString_(viewportMetaString) {
