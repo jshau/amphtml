@@ -147,7 +147,7 @@ export class Bind {
      * Upper limit on number of bindings for performance.
      * @private {number}
      */
-    this.maxNumberOfBindings_ = 1000; // Based on ~2ms to parse an expression.
+    this.maxNumberOfBindings_ = 2500; // Based on ~2ms to parse an expression.
 
     /** @const @private {!../../../src/service/resources-impl.Resources} */
     this.resources_ = Services.resourcesForDoc(ampdoc);
