@@ -10,8 +10,8 @@ import {tryParseJson} from './json';
 
 /**
  * Configuration for _Pay with Google_ AMP tags. This configuration should be
- * provided in JSON format in a <script> tag inside the relevant _Pay with Google_
- * tag.
+ * provided in JSON format in a <script> tag inside the relevant _Pay with
+ * Google_ tag.
  *
  * @typedef {{
  *   merchantId: (?string|undefined),
@@ -107,9 +107,10 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
     }
     const firstChild = scripts[0];
     if (!isJsonScriptTag(firstChild)) {
-      this.user().error(this.getTag_(),
+      this.user().error(
+          this.getTag_(),
           'PaymentDataRequest should be in a <script> tag with ' +
-          'type="application/json".');
+              'type="application/json".');
       return;
     }
     const json = tryParseJson(firstChild.textContent, e => {
@@ -125,7 +126,8 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
    * @return {!Promise<(?JsonObject|string|undefined)>} the response promise
    */
   initializePaymentClient_() {
-    const isTestMode = this.element.getAttribute(IS_TEST_MODE_) == 'true';
+    const isTestMode =
+        this.element.getAttribute(IS_TEST_MODE_).toLowerCase() == 'true';
     return this.viewer.sendMessageAwaitResponse(
         'initializePaymentClient', {isTestMode});
   }
