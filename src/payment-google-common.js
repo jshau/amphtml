@@ -86,6 +86,9 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
 
     /** @protected @const {!./service/viewer-impl.Viewer} */
     this.viewer = null;
+
+    /** @private {boolean} */
+    this.shouldUseTestOverride_ = false;
   }
 
   /** @override */
@@ -99,38 +102,65 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
    */
   getPaymentDataRequest_() {
     const scripts = this.element.getElementsByTagName('script');
-    if (scripts.length != 1) {
+    if (scripts.length > 2 || scripts.length < 1) {
       this.user().error(
           this.getTag_(),
-          'Should contain exactly one <script> child with JSON config.');
+          'Should contain 1 or 2 <script> child with JSON config.');
       return;
     }
-    const firstChild = scripts[0];
-    if (!isJsonScriptTag(firstChild)) {
-      this.user().error(
-          this.getTag_(),
-          'PaymentDataRequest should be in a <script> tag with ' +
-              'type="application/json".');
+    let paymentDataRequest;
+    let paymentDataRequestTestOverride;
+    for (let i = 0; i < scripts.length; i++) {
+      const scriptEl = scripts[i];
+      if (!isJsonScriptTag(scriptEl)) {
+        this.user().error(
+            this.getTag_(),
+            'PaymentDataRequest should be in a <script> tag with ' +
+                'type="application/json".');
+        return;
+      }
+      const json = tryParseJson(scriptEl.textContent, e => {
+        this.user().error(
+            this.getTag_(),
+            'Failed to parse PaymentDataRequest. Is it valid JSON?', e);
+        return;
+      });
+      if (scriptEl.getAttribute('name') === 'test-override') {
+        paymentDataRequestTestOverride = json;
+      } else {
+        paymentDataRequest = json;
+      }
+    }
+    if (!paymentDataRequest) {
+      this.user().error(this.getTag_(), 'PaymentDataRequest not found');
       return;
     }
-    const json = tryParseJson(firstChild.textContent, e => {
-      this.user().error(
-          this.getTag_(),
-          'Failed to parse PaymentDataRequest. Is it valid JSON?', e);
-    });
-    return json;
+    if (this.shouldUseTestOverride_ && paymentDataRequestTestOverride) {
+      // Override paymentDataRequest with paymentDataRequestTestOverride if test
+      // mode
+      paymentDataRequest =
+          Object.assign(paymentDataRequest, paymentDataRequestTestOverride);
+    }
+
+    return paymentDataRequest;
   }
 
   /**
    * @protected
-   * @return {!Promise<(?JsonObject|string|undefined)>} the response promise
+   * @return {!Promise<(JsonObject|undefined)>} the response promise
    */
   initializePaymentClient_() {
     const testModeAttr = this.element.getAttribute(IS_TEST_MODE_);
     const isTestMode =
         testModeAttr ? testModeAttr.toLowerCase() == 'true' : false;
-    return this.viewer.sendMessageAwaitResponse(
-        'initializePaymentClient', {isTestMode});
+    return this.viewer
+        .sendMessageAwaitResponse('initializePaymentClient', {isTestMode})
+        .then(result => {
+          if (result) {
+            this.shouldUseTestOverride_ = result['shouldUseTestOverride'];
+            return result;
+          }
+        });
   }
 
   /**

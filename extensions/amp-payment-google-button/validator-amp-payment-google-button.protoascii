@@ -31,6 +31,7 @@ tags: {  # <amp-payment-google-button> (json)
   spec_name: "amp-payment-google-button extension .json script"
   requires_extension: "amp-payment-google-button"
   mandatory_parent: "AMP-PAYMENT-GOOGLE-BUTTON"
+  attrs: { name: "name"}
   attrs: { name: "nonce" }
   attrs: {
     name: "type"
@@ -57,7 +58,7 @@ tags: {  # <amp-payment-google-button>
     value_regex_casei: "(false|true)"
   }
   child_tags: {
-    mandatory_num_child_tags: 1
+    mandatory_min_num_child_tags: 1
     child_tag_name_oneof: "SCRIPT"
   }
 }

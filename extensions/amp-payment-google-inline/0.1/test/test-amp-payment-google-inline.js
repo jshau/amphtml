@@ -69,8 +69,12 @@ describes.realWin(
         ]);
 
         viewerMock.sendMessageAwaitResponse
-        .withArgs('isReadyToPay', sinon.match.any)
-        .returns(Promise.resolve(true));
+            .withArgs('isReadyToPay', sinon.match.any)
+            .returns(Promise.resolve(true));
+
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('initializePaymentClient', sinon.match.any)
+            .returns(Promise.resolve({'shouldUseTestOverride': true}));
       });
 
       it('loads initialize payment client with isTestMode', () => {
@@ -316,70 +320,70 @@ describes.realWin(
       });
 
       it('should reply validation viewer request from frame in trusted viewer',
-          function() {
-            viewerMock.sendMessageAwaitResponse
-                .withArgs('getInlinePaymentIframeUrl', {})
-                .returns(Promise.resolve(IFRAME_URL));
-            viewerMock.isTrustedViewer.returns(Promise.resolve(true));
+         function() {
+           viewerMock.sendMessageAwaitResponse
+               .withArgs('getInlinePaymentIframeUrl', {})
+               .returns(Promise.resolve(IFRAME_URL));
+           viewerMock.isTrustedViewer.returns(Promise.resolve(true));
 
-            // Send intial status change event for initiating the iframe
-            // component.
-            window.postMessage(
-                {
-                  message: 'paymentReadyStatusChanged',
-                  data: {},
-                },
-                '*');
+           // Send intial status change event for initiating the iframe
+           // component.
+           window.postMessage(
+               {
+                 message: 'paymentReadyStatusChanged',
+                 data: {},
+               },
+               '*');
 
 
-            return getAmpPaymentGoogleInline().then(gPayInline => {
-              const iframes = gPayInline.getElementsByTagName('iframe');
-              expect(iframes.length).to.equal(1);
-              iframeMock.sendIframeMessage.withArgs(
-                  iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
-                  {'result': true});
+           return getAmpPaymentGoogleInline().then(gPayInline => {
+             const iframes = gPayInline.getElementsByTagName('iframe');
+             expect(iframes.length).to.equal(1);
+             iframeMock.sendIframeMessage.withArgs(
+                 iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
+                 {'result': true});
 
-              window.postMessage(
-                  {
-                    message: 'validateViewer',
-                    data: {},
-                  },
-                  '*');
-            });
-          });
+             window.postMessage(
+                 {
+                   message: 'validateViewer',
+                   data: {},
+                 },
+                 '*');
+           });
+         });
 
       it('should not reply validation viewer in non-trusted viewer',
-          function() {
-            viewerMock.sendMessageAwaitResponse
-                .withArgs('getInlinePaymentIframeUrl', {})
-                .returns(Promise.resolve(IFRAME_URL));
-            viewerMock.isTrustedViewer.returns(Promise.resolve(false));
+         function() {
+           viewerMock.sendMessageAwaitResponse
+               .withArgs('getInlinePaymentIframeUrl', {})
+               .returns(Promise.resolve(IFRAME_URL));
+           viewerMock.isTrustedViewer.returns(Promise.resolve(false));
 
-            // Send intial status change event for initiating the iframe
-            // component.
-            window.postMessage(
-                {
-                  message: 'paymentReadyStatusChanged',
-                  data: {},
-                },
-                '*');
+           // Send intial status change event for initiating the iframe
+           // component.
+           window.postMessage(
+               {
+                 message: 'paymentReadyStatusChanged',
+                 data: {},
+               },
+               '*');
 
 
-            return getAmpPaymentGoogleInline().then(gPayInline => {
-              const iframes = gPayInline.getElementsByTagName('iframe');
-              expect(iframes.length).to.equal(1);
-              iframeMock.sendIframeMessage.withArgs(
-                  iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
-                  {'result': false});
+           return getAmpPaymentGoogleInline().then(gPayInline => {
+             const iframes = gPayInline.getElementsByTagName('iframe');
+             expect(iframes.length).to.equal(1);
+             iframeMock.sendIframeMessage.withArgs(
+                 iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
+                 {'result': false});
 
-              window.postMessage(
-                  {
-                    message: 'validateViewer',
-                    data: {},
-                  },
-                  '*');
-            });
-          });
+             window.postMessage(
+                 {
+                   message: 'validateViewer',
+                   data: {},
+                 },
+                 '*');
+           });
+         });
 
       it('should call logPaymentData if requested by iframe', function() {
         viewerMock.sendMessageAwaitResponse
@@ -410,8 +414,8 @@ describes.realWin(
 
       it('should throw error if isReadyToPay returns false', () => {
         viewerMock.sendMessageAwaitResponse
-        .withArgs('isReadyToPay', sinon.match.any)
-        .returns(Promise.resolve(false));
+            .withArgs('isReadyToPay', sinon.match.any)
+            .returns(Promise.resolve(false));
         viewerMock.sendMessageAwaitResponse
             .withArgs('getInlinePaymentIframeUrl', {})
             .returns(Promise.resolve(IFRAME_URL));
@@ -433,7 +437,70 @@ describes.realWin(
             });
       });
 
-      function getAmpPaymentGoogleInline(opt_isTestMode) {
+      it('should use test-override json params if in test mode', () => {
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('getInlinePaymentIframeUrl', {})
+            .returns(Promise.resolve(IFRAME_URL));
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('initializePaymentClient', sinon.match.any)
+            .returns(Promise.resolve({'shouldUseTestOverride': true}));
+        viewerMock.sendMessageAwaitResponse
+            .withArgs(
+                'getInlinePaymentIframeUrl', {'overrideKey': 'overrideValue'})
+            .returns(Promise.resolve(IFRAME_URL));
+
+        // Send intial status change event for initiating the iframe component.
+        window.postMessage(
+            {
+              message: 'paymentReadyStatusChanged',
+              data: {},
+            },
+            '*');
+
+        return getAmpPaymentGoogleInline(
+                   true /* isTestMode */, {'overrideKey': 'originalValue'},
+                   {'overrideKey': 'overrideValue'})
+            .then(gPayInline => {
+              const iframes = gPayInline.getElementsByTagName('iframe');
+
+              expect(iframes.length).to.equal(1);
+              expect(iframes[0].src).to.equal(IFRAME_URL);
+            });
+      });
+
+      it('should not use test-override json params if in non-test mode', () => {
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('getInlinePaymentIframeUrl', {})
+            .returns(Promise.resolve(IFRAME_URL));
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('initializePaymentClient', sinon.match.any)
+            .returns(Promise.resolve({'shouldUseTestOverride': false}));
+        viewerMock.sendMessageAwaitResponse
+            .withArgs(
+                'getInlinePaymentIframeUrl', {'overrideKey': 'originalValue'})
+            .returns(Promise.resolve(IFRAME_URL));
+
+        // Send intial status change event for initiating the iframe component.
+        window.postMessage(
+            {
+              message: 'paymentReadyStatusChanged',
+              data: {},
+            },
+            '*');
+
+        return getAmpPaymentGoogleInline(
+                   true /* isTestMode */, {'overrideKey': 'originalValue'},
+                   {'overrideKey': 'overrideValue'})
+            .then(gPayInline => {
+              const iframes = gPayInline.getElementsByTagName('iframe');
+
+              expect(iframes.length).to.equal(1);
+              expect(iframes[0].src).to.equal(IFRAME_URL);
+            });
+      });
+
+      function getAmpPaymentGoogleInline(
+          opt_isTestMode, opt_requestJson, opt_testOverrideJson) {
         const form = doc.createElement('form');
         form.setAttribute('method', 'post');
         form.setAttribute('action-xhr', '/my-form-handler');
@@ -457,8 +524,17 @@ describes.realWin(
 
         const config = doc.createElement('script');
         config.setAttribute('type', 'application/json');
-        config.innerHTML = '{}';
+        config.innerHTML =
+            opt_requestJson ? JSON.stringify(opt_requestJson) : '{}';
         inline.appendChild(config);
+
+        if (opt_testOverrideJson) {
+          const overrideConfig = doc.createElement('script');
+          overrideConfig.setAttribute('type', 'application/json');
+          overrideConfig.setAttribute('name', 'test-override');
+          overrideConfig.innerHTML = JSON.stringify(opt_testOverrideJson);
+          inline.appendChild(overrideConfig);
+        }
 
         return inline.build()
             .then(() => inline.layoutCallback())
