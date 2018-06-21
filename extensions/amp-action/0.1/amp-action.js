@@ -67,6 +67,7 @@ export class ActionService {
 
   /**
    * @private
+   * @restricted
    */
   start_() {
     if (!this.enabled_) {
@@ -84,7 +85,7 @@ export class ActionService {
 
   /**
    * @private
-   * @returns {!Promise<string>}
+   * @return {!Promise<string>}
    */
   getIdToken_() {
     return this.viewer_.sendMessageAwaitResponse('getAccessTokenPassive', dict({
