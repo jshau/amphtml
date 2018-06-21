@@ -126,8 +126,9 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
    * @return {!Promise<(?JsonObject|string|undefined)>} the response promise
    */
   initializePaymentClient_() {
+    const testModeAttr = this.element.getAttribute(IS_TEST_MODE_);
     const isTestMode =
-        this.element.getAttribute(IS_TEST_MODE_).toLowerCase() == 'true';
+        testModeAttr ? testModeAttr.toLowerCase() == 'true' : false;
     return this.viewer.sendMessageAwaitResponse(
         'initializePaymentClient', {isTestMode});
   }
