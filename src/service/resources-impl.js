@@ -1153,6 +1153,9 @@ export class Resources {
     this.schedulePass();
   }
 
+  /**
+   * Runs a pass immediately.
+   */
   doPass() {
     if (!this.isRuntimeOn_) {
       dev().fine(TAG_, 'runtime is off');
@@ -1256,8 +1259,8 @@ export class Resources {
     const viewportRect = this.viewport_.getRect();
     const topOffset = viewportRect.height / 10;
     const bottomOffset = viewportRect.height / 10;
-    const isScrollingStopped = (Math.abs(this.lastVelocity_) < 1e-2 &&
-        now - this.lastScrollTime_ > MUTATE_DEFER_DELAY_ ||
+    const isScrollingStopped = ((Math.abs(this.lastVelocity_) < 1e-2 &&
+        now - this.lastScrollTime_ > MUTATE_DEFER_DELAY_) ||
         now - this.lastScrollTime_ > MUTATE_DEFER_DELAY_ * 2);
 
     // TODO(jridgewell, #12780): Update resize rules to account for layers.
@@ -1279,6 +1282,8 @@ export class Resources {
 
         let topMarginDiff = 0;
         let bottomMarginDiff = 0;
+        let leftMarginDiff = 0;
+        let rightMarginDiff = 0;
         let {top: topUnchangedBoundary, bottom: bottomDisplacedBoundary} = box;
         let newMargins = undefined;
         if (request.marginChange) {
@@ -1289,6 +1294,12 @@ export class Resources {
           }
           if (newMargins.bottom != undefined) {
             bottomMarginDiff = newMargins.bottom - margins.bottom;
+          }
+          if (newMargins.left != undefined) {
+            leftMarginDiff = newMargins.left - margins.left;
+          }
+          if (newMargins.right != undefined) {
+            rightMarginDiff = newMargins.right - margins.right;
           }
           if (topMarginDiff) {
             topUnchangedBoundary = box.top - margins.top;
@@ -1302,11 +1313,13 @@ export class Resources {
           }
         }
         const heightDiff = request.newHeight - box.height;
+        const widthDiff = request.newWidth - box.width;
 
         // Check resize rules. It will either resize element immediately, or
         // wait until scrolling stops or will call the overflow callback.
         let resize = false;
-        if (heightDiff == 0 && topMarginDiff == 0 && bottomMarginDiff == 0) {
+        if (heightDiff == 0 && topMarginDiff == 0 && bottomMarginDiff == 0 &&
+            widthDiff == 0 && leftMarginDiff == 0 && rightMarginDiff == 0) {
           // 1. Nothing to resize.
         } else if (request.force || !this.visible_) {
           // 2. An immediate execution requested or the document is hidden.
@@ -1536,7 +1549,8 @@ export class Resources {
                 r.getState() == ResourceState.NOT_LAID_OUT ||
                 !r.hasBeenMeasured() ||
                 r.isMeasureRequested() ||
-                relayoutTop != -1 && r.getLayoutBox().bottom >= relayoutTop) {
+                (relayoutTop != -1 && r.getLayoutBox().bottom >= relayoutTop)
+        ) {
           const wasDisplayed = r.isDisplayed();
           r.measure();
           if (wasDisplayed && !r.isDisplayed()) {
@@ -1753,7 +1767,7 @@ export class Resources {
       posPriority *= 2;
     }
     posPriority = Math.abs(posPriority);
-    return task.priority * PRIORITY_BASE_ + posPriority;
+    return (task.priority * PRIORITY_BASE_) + posPriority;
   }
 
   /**
@@ -1774,7 +1788,7 @@ export class Resources {
   calcTaskScoreLayers_(task, cache) {
     const layerScore = this.layers_.iterateAncestry(task.resource.element,
         this.boundCalcLayoutScore_, cache);
-    return task.priority * PRIORITY_BASE_ + layerScore;
+    return (task.priority * PRIORITY_BASE_) + layerScore;
   }
 
   /**
@@ -1798,7 +1812,7 @@ export class Resources {
     const nonActivePenalty = layout.isActiveUnsafe() ? 1 : 2;
     const distance = layout.getHorizontalDistanceFromParent() +
         layout.getVerticalDistanceFromParent();
-    return cache[id] = score + nonActivePenalty * depthPenalty * distance;
+    return cache[id] = score + (nonActivePenalty * depthPenalty * distance);
   }
 
   /**
