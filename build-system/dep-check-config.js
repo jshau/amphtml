@@ -102,6 +102,8 @@ exports.rules = [
           'third_party/subscriptions-project/config.js',
       'extensions/amp-subscriptions-google/**/*.js->' +
           'third_party/subscriptions-project/swg.js',
+      'extensions/amp-payment-google-button/**/*.js->' +
+          'third_party/payjs/**/*.js',
     ],
   },
   // Rules for 3p

@@ -14,97 +14,18 @@
  * limitations under the License.
  */
 
+import {PaymentsClient} from '../../../third_party/payjs/src/payjs';
+import {createButtonHelper} from '../../../third_party/payjs/src/button';
 import {ActionTrust} from '../../../src/action-constants';
 import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
 import {Services} from '../../../src/services';
 import {createCustomEvent} from '../../../src/event-helper';
-import {setStyle, setStyles} from '../../../src/style';
 
 /** @const {string} */
 const TAG = 'amp-payment-google-button';
 
 /** @const {string} */
 const LOAD_PAYMENT_DATA_EVENT_NAME = 'loadPaymentData';
-
-// This code has been copied from payjs. Avoid modifying this code as much as
-// possible in order to keep it in sync with payjs.
-// TODO(b/72448795): Remove this code once pay.js has been open-sourced and
-// included in the AMP repo.
-// START payjs
-
-/**
- * Supported Pay with Google Button type.
- *
- * @enum {string}
- */
-const ButtonType = {
-  SHORT: 'short',
-  LONG: 'long',
-};
-
-/** @const {string} */
-const LONG_BUTTON_SVG =
-    'url(\'https://www.gstatic.com/instantbuy/svg/buy_with_gpay_btn.svg\')';
-
-/** @const {string} */
-const SHORT_BUTTON_SVG =
-    'url(\'https://www.gstatic.com/instantbuy/svg/gpay_btn.svg\')';
-
-/**
- * Return a <div> element containing "Pay With Google" button.
- *
- * @param {ButtonOptions=} options
- * @return {!Element}
- * @export
- */
-function createButton(options = {}) {
-  try {
-    const button = document.createElement('button');
-    if (!Object.values(ButtonType).includes(options.buttonType)) {
-      options.buttonType = ButtonType.LONG;
-    }
-    const backgroundImage = options.buttonType == ButtonType.LONG ?
-      LONG_BUTTON_SVG :
-      SHORT_BUTTON_SVG;
-    const width = options.buttonType == ButtonType.LONG ? '240px' : '160px';
-    const styles = {
-      'background-color': '#fff', 'background-image': backgroundImage,
-      'background-position': 'center', 'background-origin': 'content-box',
-      'background-repeat': 'no-repeat', 'background-size': 'contain',
-      'box-shadow': '0 1px 3px 0 #6d6d6d', 'border': '0',
-      'border-radius': '4px', 'cursor': 'pointer', 'height': '40px',
-      'outline': '0', 'padding': '10px 0', 'width': width,
-    };
-    setStyles(button, styles);
-    button.addEventListener('focus', function() {
-      setStyle(button, 'boxShadow',
-          '0 1px 3px 0 #6d6d6d, inset 0 0 0 1px #a8abb3');
-    });
-    button.addEventListener('mousedown', function() {
-      setStyle(button, 'backgroundColor', '#e7e8e8');
-    });
-    button.addEventListener('mouseup', function() {
-      setStyle(button, 'backgroundColor', '#fff');
-    });
-    if (options.onClick) {
-      button.addEventListener('click', options.onClick);
-    } else {
-      // TODO(b/69853059): Create different error type so it won't page.
-      throw new Error('Parameter \'onClick\' must be set.');
-    }
-
-    const div = document.createElement('div');
-    div.appendChild(button);
-    return div;
-  } catch (e) {
-    // NOTE: Removed call to PaymentsClient#handleError because PaymentsClient
-    // is not available in AMP.
-    console.log('Error', e);
-  }
-}
-
-// END payjs
-
 
 class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
   /** @param {!AmpElement} element */
@@ -117,6 +38,9 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
 
     /** @private {?../../../src/service/action-impl.ActionService} */
     this.actions_ = null;
+
+    /** @private {?PaymentsClient} */
+    this.client_ = null;
   }
 
   /** @override */
@@ -131,32 +55,115 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
     this.actions_ = Services.actionServiceForDoc(this.element);
 
     return this.viewer.whenFirstVisible()
-        .then(() => super.initializePaymentClient_())
-        .then(() => super.isReadyToPay_())
-        .then(response => {
-          if (response['result']) {
-            this.render_();
+        .then(() => this.viewer.isTrustedViewer())
+        .then(result => {
+          if (result) {
+            return super.initializePaymentClient_()
+                .then(() => super.isReadyToPay_())
+                .then(response => {
+                  if (response['result']) {
+                    this.render_(() => this.onClickButton_());
+                  } else {
+                    throw new Error('Google Pay is not supported');
+                  }
+                });
           } else {
-            throw new Error('Google Pay is not supported');
+            // not in Google Viewer, use Google Payments Client directly
+            this.localInitializePaymentClient_();
+            return this.localIsReadyToPay_()
+                .then(response => {
+                  if (response['result']) {
+                    this.render_(() => this.localOnClickButton_());
+                  } else {
+                    throw new Error('Google Pay is not supported');
+                  }
+                });
           }
-        });
+    });
   }
 
-  render_() {
-    this.element.appendChild(createButton({
-      onClick: () => this.onClickButton_(),
+  /**
+   * Render the google pay button with specified on click function.
+   *
+   * @param {!function(): void} onClickFunc on click function of the google pay button
+   * @private
+   */
+  render_(onClickFunc) {
+    this.element.appendChild(createButtonHelper({
+      onClick: onClickFunc,
     }));
   }
 
+  /**
+   * Request payment data, which contains necessary information to
+   * complete a payment, and trigger the load payment data event.
+   *
+   * @private
+   */
   onClickButton_() {
     this.viewer
         .sendMessageAwaitResponse(
-            'loadPaymentData', this.getPaymentDataRequest_())
-        .then(data => {
-          const name = LOAD_PAYMENT_DATA_EVENT_NAME;
-          const event = createCustomEvent(this.win, `${TAG}.${name}`, data);
-          this.actions_.trigger(this.element, name, event, ActionTrust.HIGH);
-        });
+            'loadPaymentData', super.getPaymentDataRequest_())
+        .then(data => this.triggerAction_(data));
+  }
+
+  /**
+   * Trigger load payment data event with the given payment data
+   *
+   * @param {!PaymentData} paymentData payment data from load payment data function
+   * @private
+   */
+  triggerAction_(paymentData) {
+    const name = LOAD_PAYMENT_DATA_EVENT_NAME;
+    const event = createCustomEvent(this.win, `${TAG}.${name}`, paymentData);
+    this.actions_.trigger(this.element, name, event, ActionTrust.HIGH);
+  }
+
+  /**
+   * Initialize a PaymentsClient object. Initial development will use a
+   * TEST environment returning dummy payment methods suitable for referencing
+   * the structure of a payment response. A selected payment method is not
+   * capable of a transaction.
+   *
+   * @private
+   */
+  localInitializePaymentClient_() {
+    const isTestMode = super.isTestMode_();
+    let options;
+    if (isTestMode) {
+        options = {'environment': 'TEST'};
+    } else {
+        options = {'environment': 'PRODUCTION'};
+    }
+    this.client_ = new PaymentsClient(options);
+  }
+
+  /**
+   * Check in local payments client that if the user can make payments
+   * using the Payment API. Will return if the Google Pay API is supported
+   * by the current browser for the specified payment methods.
+   *
+   * @return {!Promise<(boolean|undefined)>} the response promise will contain
+   * the boolean result and error message
+   * @private
+   */
+  localIsReadyToPay_() {
+    const paymentDataRequest = super.getPaymentDataRequest_();
+    return this.client_.isReadyToPay(
+        {'allowedPaymentMethods': paymentDataRequest.allowedPaymentMethods}
+    );
+  }
+
+  /**
+   * Request payment data, which contains necessary information to
+   * complete a payment on local payments client and trigger the load
+   * payment data event.
+   *
+   * @private
+   */
+  localOnClickButton_() {
+    this.client_.loadPaymentData(super.getPaymentDataRequest_())
+        .then(data => this.triggerAction_(data));
   }
 
   /** @override */
