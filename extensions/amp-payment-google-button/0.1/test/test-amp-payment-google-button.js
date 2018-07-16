@@ -38,82 +38,76 @@ describes.realWin('amp-payment-google-button', {
 
     viewerMock.whenFirstVisible.returns(Promise.resolve());
     viewerMock.sendMessageAwaitResponse
+        .withArgs('initializePaymentClient', {isTestMode: true})
+        .returns(Promise.resolve());
+    viewerMock.sendMessageAwaitResponse
         .withArgs('isReadyToPay', sinon.match.any)
-        .returns(Promise.resolve(true));
+        .returns(Promise.resolve({'result': true}));
   });
 
   it('should call initialize payment client before render button', () => {
     const buttons = doc.getElementsByTagName('button');
     expect(buttons.length).to.equal(0);
 
-    viewerMock.sendMessageAwaitResponse
-        .withArgs('initializePaymentClient', {isTestMode: true})
-        .returns(Promise.resolve());
-
-    return getAmpPaymentGoogleButton(true /* isTestMode */).then(gPayButton => {
-      viewerMock.sendMessageAwaitResponse
-          .withArgs('loadPaymentData', sinon.match.any)
-          .returns(Promise.resolve({
-            paymentMethodToken: {
-              token: 'fakeToken',
-            },
-          }));
-
-      const buttons = gPayButton.getElementsByTagName('button');
-      expect(buttons.length).to.equal(1);
-    });
+    return getAmpPaymentGoogleButton(true /* isTestMode */).then(
+        gPayButton => {
+          const buttons = gPayButton.getElementsByTagName('button');
+          expect(buttons.length).to.equal(1);
+        });
   });
 
   it('should not render button if initialize payment client fails', () => {
+    expectAsyncConsoleError(/initialize payment client fails/);
     viewerMock.sendMessageAwaitResponse
         .withArgs('initializePaymentClient', {isTestMode: true})
         .returns(Promise.reject('initialize payment client fails'));
 
-    return getAmpPaymentGoogleButton(true /* isTestMode */)
-        .then(
-            gPayButton => {
-              throw new Error('This should not be called');
-            },
-            error => {
-              expect(error).to.equal('initialize payment client fails');
-            });
+    return getAmpPaymentGoogleButton(true /* isTestMode */).then(
+        gPayButton => {
+          throw new Error('This should not be called');
+        },
+        error => {
+          expect(error).to.equal('initialize payment client fails');
+        });
   });
 
   it('loads a button and displays the selected instrument', () => {
-    return getAmpPaymentGoogleButton().then(gPayButton => {
-      viewerMock.sendMessageAwaitResponse
-          .withArgs('loadPaymentData', sinon.match.any)
-          .returns(Promise.resolve({
-            paymentMethodToken: {
-              token: 'fakeToken',
-            },
-          }));
+    return getAmpPaymentGoogleButton(true /* isTestMode */).then(
+        gPayButton => {
+          viewerMock.sendMessageAwaitResponse
+              .withArgs('loadPaymentData', sinon.match.any)
+              .returns(Promise.resolve({
+                paymentMethodToken: {
+                  token: 'fakeToken',
+                },
+              }));
 
-      const trigger = sandbox.spy(
-          gPayButton.implementation_.actions_, 'trigger');
+          const trigger = sandbox.spy(
+              gPayButton.implementation_.actions_, 'trigger');
 
-      const buttons = gPayButton.getElementsByTagName('button');
-      expect(buttons.length).to.equal(1);
-      buttons.item(0).click();
+          const buttons = gPayButton.getElementsByTagName('button');
+          expect(buttons.length).to.equal(1);
+          buttons.item(0).click();
 
-      // Delay until the 'loadPaymentData' message response is processed.
-      return Services.timerFor(win).promise(50).then(() => {
-        expect(trigger).to.be.calledWith(
-            gPayButton,
-            'loadPaymentData',
-            sinon.match.any);
+          // Delay until the 'loadPaymentData' message response is processed.
+          return Services.timerFor(win).promise(50).then(() => {
+            expect(trigger).to.be.calledWith(
+                gPayButton,
+                'loadPaymentData',
+                sinon.match.any);
 
-        trigger.restore();
-      });
-    });
+            trigger.restore();
+          });
+        });
   });
 
   it('should throw error if isReadyToPay returns false', () => {
+    expectAsyncConsoleError(/Google Pay is not supported/);
     viewerMock.sendMessageAwaitResponse
         .withArgs('isReadyToPay', sinon.match.any)
-        .returns(Promise.resolve(false));
+        .returns(Promise.resolve({'result': false}));
 
-    return getAmpPaymentGoogleButton().then(
+    return getAmpPaymentGoogleButton(true /* isTestMode */).then(
         gPayButton => {
           throw new Error('This should not be called');
         },

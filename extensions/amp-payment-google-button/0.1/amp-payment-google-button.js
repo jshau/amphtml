@@ -133,8 +133,8 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
     return this.viewer.whenFirstVisible()
         .then(() => super.initializePaymentClient_())
         .then(() => super.isReadyToPay_())
-        .then(result => {
-          if (result) {
+        .then(response => {
+          if (response['result']) {
             this.render_();
           } else {
             throw new Error('Google Pay is not supported');
