@@ -102,6 +102,7 @@ exports.rules = [
           'third_party/subscriptions-project/config.js',
       'extensions/amp-subscriptions-google/**/*.js->' +
           'third_party/subscriptions-project/swg.js',
+      'src/payment-google-common.js->third_party/payjs/**/*.js',
       'extensions/amp-payment-google-button/**/*.js->' +
           'third_party/payjs/**/*.js',
     ],

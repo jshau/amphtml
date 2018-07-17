@@ -2,6 +2,7 @@
  * @fileoverview Description of this file.
  */
 
+import {PaymentsClient} from '../third_party/payjs/src/payjs'
 import {Services} from './services';
 import {isJsonScriptTag} from './dom';
 import {tryParseJson} from './json';
@@ -87,6 +88,9 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
     /** @protected @const {!./service/viewer-impl.Viewer} */
     this.viewer = null;
 
+    /** @protected {?PaymentsClient} */
+    this.client_ = null;
+
     /** @private {boolean} */
     this.shouldUseTestOverride_ = false;
   }
@@ -162,6 +166,27 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
   }
 
   /**
+   * Initialize a local PaymentsClient object. Initial development will use a
+   * TEST environment returning dummy payment methods suitable for referencing
+   * the structure of a payment response. A selected payment method is not
+   * capable of a transaction.
+   *
+   * @protected
+   */
+  localInitializePaymentClient_() {
+    const isTestMode = this.isTestMode_();
+    let options;
+    if (isTestMode) {
+        options = {'environment': 'TEST'};
+        this.shouldUseTestOverride_ = true;
+    } else {
+        options = {'environment': 'PRODUCTION'};
+        this.shouldUseTestOverride_ = false;
+    }
+    this.client_ = new PaymentsClient(options);
+  }
+
+  /**
    * @potected
    * @return {boolean} if is in test mode
    */
@@ -180,6 +205,22 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
     return this.viewer.sendMessageAwaitResponse(
         'isReadyToPay',
         {'allowedPaymentMethods': paymentDataRequest.allowedPaymentMethods});
+  }
+
+  /**
+   * Check in local payments client that if the user can make payments
+   * using the Payment API. Will return if the Google Pay API is supported
+   * by the current browser for the specified payment methods.
+   *
+   * @return {!Promise<(boolean|undefined)>} the response promise will contain
+   * the boolean result and error message
+   * @protected
+   */
+  localIsReadyToPay_() {
+    const paymentDataRequest = this.getPaymentDataRequest_();
+    return this.client_.isReadyToPay(
+        {'allowedPaymentMethods': paymentDataRequest.allowedPaymentMethods}
+    );
   }
 
   /*

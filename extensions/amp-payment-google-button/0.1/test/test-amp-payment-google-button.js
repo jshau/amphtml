@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {AmpPaymentGoogleBase} from '../../../../src/payment-google-common';
 import '../amp-payment-google-button';
 import * as sinon from 'sinon';
 import {Services} from '../../../../src/services';
@@ -137,7 +138,7 @@ describes.realWin('amp-payment-google-button', {
       viewerMock.isTrustedViewer.returns(Promise.resolve(false));
 
       commonPreBuildCallback = function(button) {
-        sandbox.stub(button.implementation_, 'localIsReadyToPay_')
+        sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
             .returns(Promise.resolve({'result': true}));
       }
     });
@@ -187,7 +188,7 @@ describes.realWin('amp-payment-google-button', {
       expectAsyncConsoleError(/Google Pay is not supported/);
 
       let preBuildCallback = function(button) {
-        sandbox.stub(button.implementation_, 'localIsReadyToPay_')
+        sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
             .returns(Promise.resolve({'result': false}));
       }
 
