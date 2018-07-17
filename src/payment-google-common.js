@@ -150,9 +150,7 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
    * @return {!Promise<(JsonObject|undefined)>} the response promise
    */
   initializePaymentClient_() {
-    const testModeAttr = this.element.getAttribute(IS_TEST_MODE_);
-    const isTestMode =
-        testModeAttr ? testModeAttr.toLowerCase() == 'true' : false;
+    const isTestMode = this.isTestMode_();
     return this.viewer
         .sendMessageAwaitResponse('initializePaymentClient', {isTestMode})
         .then(result => {
@@ -164,9 +162,18 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
   }
 
   /**
+   * @potected
+   * @return {boolean} if is in test mode
+   */
+  isTestMode_() {
+    const testModeAttr = this.element.getAttribute(IS_TEST_MODE_);
+    return testModeAttr ? testModeAttr.toLowerCase() == 'true' : false;
+  }
+
+  /**
    * @protected
    * @return {!Promise<(boolean|undefined)>} the response promise will contain
-   * the bollean result and error message
+   * the boolean result and error message
    */
   isReadyToPay_() {
     const paymentDataRequest = this.getPaymentDataRequest_();
