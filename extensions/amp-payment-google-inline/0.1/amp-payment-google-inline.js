@@ -38,6 +38,9 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
   constructor(element) {
     super(element);
 
+    /** @private {?../../../src/service/action-impl.ActionService} */
+    this.actions_ = null;
+
     this.iframe_ = null;
 
     this.iframeService_ = getServiceForDoc(this.win.document, SERVICE_TAG);
@@ -77,8 +80,8 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
               this.user().error(
                   'Initialize payment client failed with error: ' + error);
             })
-        .then(result => {
-          if (result) {
+        .then(response => {
+          if (response['result']) {
             return this.viewer.sendMessageAwaitResponse(
                 'getInlinePaymentIframeUrl', this.getPaymentDataRequest_());
           } else {
@@ -107,7 +110,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
    */
   render_(iframeSrc) {
     if (iframeSrc) {
-      window.addEventListener('message', event => this.onMessage_(event));
+      this.win.addEventListener('message', event => this.onMessage_(event));
 
       this.iframe_ = this.win.document.createElement('iframe');
       this.iframe_.src = iframeSrc;

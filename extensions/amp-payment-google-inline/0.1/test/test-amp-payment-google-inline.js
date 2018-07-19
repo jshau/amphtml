@@ -70,26 +70,21 @@ describes.realWin(
 
         viewerMock.sendMessageAwaitResponse
             .withArgs('isReadyToPay', sinon.match.any)
-            .returns(Promise.resolve(true));
-
+            .returns(Promise.resolve({'result': true}));
         viewerMock.sendMessageAwaitResponse
             .withArgs('initializePaymentClient', sinon.match.any)
             .returns(Promise.resolve({'shouldUseTestOverride': true}));
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('getInlinePaymentIframeUrl', {})
+            .returns(Promise.resolve(IFRAME_URL));
       });
 
       it('loads initialize payment client with isTestMode', () => {
         const iframes = doc.getElementsByTagName('iframe');
         expect(iframes.length).to.equal(0);
 
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('initializePaymentClient', {isTestMode: true})
-            .returns(Promise.resolve());
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
-
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -106,12 +101,8 @@ describes.realWin(
       });
 
       it('loads the inline payment iframe', () => {
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
-
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -127,12 +118,8 @@ describes.realWin(
       });
 
       it('submits the payment data along with the form', () => {
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
-
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -189,12 +176,8 @@ describes.realWin(
       });
 
       it('should not set payment data if submit fails', () => {
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
-
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -226,15 +209,12 @@ describes.realWin(
       });
 
       it('should call loadPaymentData if requested by iframe', function() {
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
         viewerMock.sendMessageAwaitResponse.withArgs('loadPaymentData', {})
             .returns(
                 Promise.resolve({data: {paymentMethodToken: PAYMENT_TOKEN}}));
 
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -250,7 +230,7 @@ describes.realWin(
                   {data: {paymentMethodToken: PAYMENT_TOKEN}})
               .returns();
 
-          window.postMessage(
+          win.postMessage(
               {
                 message: 'loadPaymentData',
                 data: {},
@@ -260,14 +240,11 @@ describes.realWin(
       });
 
       it('should not call loadPaymentData if failed', function() {
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
         viewerMock.sendMessageAwaitResponse.withArgs('loadPaymentData', {})
             .throws('loadPaymentData fail');
 
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -283,7 +260,7 @@ describes.realWin(
                   sinon.match.any)
               .throws('Should not call with this argument');
 
-          window.postMessage(
+          win.postMessage(
               {
                 message: 'loadPaymentData',
                 data: {},
@@ -293,13 +270,10 @@ describes.realWin(
       });
 
       it('should call prefetchPaymentData if requested by iframe', function() {
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
         viewerMock.sendMessage.withArgs('prefetchPaymentData', {}).returns();
 
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -310,7 +284,7 @@ describes.realWin(
           const iframes = gPayInline.getElementsByTagName('iframe');
           expect(iframes.length).to.equal(1);
 
-          window.postMessage(
+          win.postMessage(
               {
                 message: 'prefetchPaymentData',
                 data: {},
@@ -320,48 +294,42 @@ describes.realWin(
       });
 
       it('should reply validation viewer request from frame in trusted viewer',
-         function() {
-           viewerMock.sendMessageAwaitResponse
-               .withArgs('getInlinePaymentIframeUrl', {})
-               .returns(Promise.resolve(IFRAME_URL));
-           viewerMock.isTrustedViewer.returns(Promise.resolve(true));
+          function() {
+            viewerMock.isTrustedViewer.returns(Promise.resolve(true));
 
-           // Send intial status change event for initiating the iframe
-           // component.
-           window.postMessage(
-               {
+            // Send intial status change event for initiating the iframe
+            // component.
+            win.postMessage(
+                {
                  message: 'paymentReadyStatusChanged',
                  data: {},
-               },
-               '*');
+                },
+                '*');
 
 
-           return getAmpPaymentGoogleInline().then(gPayInline => {
-             const iframes = gPayInline.getElementsByTagName('iframe');
-             expect(iframes.length).to.equal(1);
-             iframeMock.sendIframeMessage.withArgs(
+            return getAmpPaymentGoogleInline().then(gPayInline => {
+              const iframes = gPayInline.getElementsByTagName('iframe');
+              expect(iframes.length).to.equal(1);
+              iframeMock.sendIframeMessage.withArgs(
                  iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
                  {'result': true});
 
-             window.postMessage(
+              win.postMessage(
                  {
                    message: 'validateViewer',
                    data: {},
                  },
                  '*');
-           });
-         });
+            });
+      });
 
       it('should not reply validation viewer in non-trusted viewer',
-         function() {
-           viewerMock.sendMessageAwaitResponse
-               .withArgs('getInlinePaymentIframeUrl', {})
-               .returns(Promise.resolve(IFRAME_URL));
-           viewerMock.isTrustedViewer.returns(Promise.resolve(false));
+          function() {
+            viewerMock.isTrustedViewer.returns(Promise.resolve(false));
 
-           // Send intial status change event for initiating the iframe
-           // component.
-           window.postMessage(
+            // Send intial status change event for initiating the iframe
+            // component.
+            win.postMessage(
                {
                  message: 'paymentReadyStatusChanged',
                  data: {},
@@ -369,30 +337,27 @@ describes.realWin(
                '*');
 
 
-           return getAmpPaymentGoogleInline().then(gPayInline => {
-             const iframes = gPayInline.getElementsByTagName('iframe');
-             expect(iframes.length).to.equal(1);
-             iframeMock.sendIframeMessage.withArgs(
-                 iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
-                 {'result': false});
+            return getAmpPaymentGoogleInline().then(gPayInline => {
+              const iframes = gPayInline.getElementsByTagName('iframe');
+              expect(iframes.length).to.equal(1);
+              iframeMock.sendIframeMessage.withArgs(
+                  iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
+                  {'result': false});
 
-             window.postMessage(
-                 {
+              win.postMessage(
+                  {
                    message: 'validateViewer',
                    data: {},
-                 },
-                 '*');
-           });
-         });
+                  },
+                  '*');
+            });
+      });
 
       it('should call logPaymentData if requested by iframe', function() {
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
         viewerMock.sendMessage.withArgs('logPaymentData', {}).returns();
 
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -403,7 +368,7 @@ describes.realWin(
           const iframes = gPayInline.getElementsByTagName('iframe');
           expect(iframes.length).to.equal(1);
 
-          window.postMessage(
+          win.postMessage(
               {
                 message: 'logPaymentData',
                 data: {},
@@ -415,13 +380,10 @@ describes.realWin(
       it('should throw error if isReadyToPay returns false', () => {
         viewerMock.sendMessageAwaitResponse
             .withArgs('isReadyToPay', sinon.match.any)
-            .returns(Promise.resolve(false));
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
+            .returns(Promise.resolve({'result': false}));
 
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -439,18 +401,12 @@ describes.realWin(
 
       it('should use test-override json params if in test mode', () => {
         viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
-        viewerMock.sendMessageAwaitResponse
-            .withArgs('initializePaymentClient', sinon.match.any)
-            .returns(Promise.resolve({'shouldUseTestOverride': true}));
-        viewerMock.sendMessageAwaitResponse
             .withArgs(
                 'getInlinePaymentIframeUrl', {'overrideKey': 'overrideValue'})
             .returns(Promise.resolve(IFRAME_URL));
 
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
@@ -470,9 +426,6 @@ describes.realWin(
 
       it('should not use test-override json params if in non-test mode', () => {
         viewerMock.sendMessageAwaitResponse
-            .withArgs('getInlinePaymentIframeUrl', {})
-            .returns(Promise.resolve(IFRAME_URL));
-        viewerMock.sendMessageAwaitResponse
             .withArgs('initializePaymentClient', sinon.match.any)
             .returns(Promise.resolve({'shouldUseTestOverride': false}));
         viewerMock.sendMessageAwaitResponse
@@ -481,7 +434,7 @@ describes.realWin(
             .returns(Promise.resolve(IFRAME_URL));
 
         // Send intial status change event for initiating the iframe component.
-        window.postMessage(
+        win.postMessage(
             {
               message: 'paymentReadyStatusChanged',
               data: {},
