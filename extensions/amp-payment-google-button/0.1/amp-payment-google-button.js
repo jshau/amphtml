@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {PaymentsClient} from '../../../third_party/payjs/src/payjs';
 import {createButtonHelper} from '../../../third_party/payjs/src/button';
 import {ActionTrust} from '../../../src/action-constants';
 import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
@@ -38,9 +37,6 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
 
     /** @private {?../../../src/service/action-impl.ActionService} */
     this.actions_ = null;
-
-    /** @private {?PaymentsClient} */
-    this.client_ = null;
   }
 
   /** @override */
@@ -69,8 +65,8 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
                 });
           } else {
             // not in Google Viewer, use Google Payments Client directly
-            this.localInitializePaymentClient_();
-            return this.localIsReadyToPay_()
+            super.localInitializePaymentClient_();
+            return super.localIsReadyToPay_()
                 .then(response => {
                   if (response['result']) {
                     this.render_(() => this.localOnClickButton_());
@@ -108,53 +104,6 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
   }
 
   /**
-   * Trigger load payment data event with the given payment data
-   *
-   * @param {!PaymentData} paymentData payment data from load payment data function
-   * @private
-   */
-  triggerAction_(paymentData) {
-    const name = LOAD_PAYMENT_DATA_EVENT_NAME;
-    const event = createCustomEvent(this.win, `${TAG}.${name}`, paymentData);
-    this.actions_.trigger(this.element, name, event, ActionTrust.HIGH);
-  }
-
-  /**
-   * Initialize a PaymentsClient object. Initial development will use a
-   * TEST environment returning dummy payment methods suitable for referencing
-   * the structure of a payment response. A selected payment method is not
-   * capable of a transaction.
-   *
-   * @private
-   */
-  localInitializePaymentClient_() {
-    const isTestMode = super.isTestMode_();
-    let options;
-    if (isTestMode) {
-        options = {'environment': 'TEST'};
-    } else {
-        options = {'environment': 'PRODUCTION'};
-    }
-    this.client_ = new PaymentsClient(options);
-  }
-
-  /**
-   * Check in local payments client that if the user can make payments
-   * using the Payment API. Will return if the Google Pay API is supported
-   * by the current browser for the specified payment methods.
-   *
-   * @return {!Promise<(boolean|undefined)>} the response promise will contain
-   * the boolean result and error message
-   * @private
-   */
-  localIsReadyToPay_() {
-    const paymentDataRequest = super.getPaymentDataRequest_();
-    return this.client_.isReadyToPay(
-        {'allowedPaymentMethods': paymentDataRequest.allowedPaymentMethods}
-    );
-  }
-
-  /**
    * Request payment data, which contains necessary information to
    * complete a payment on local payments client and trigger the load
    * payment data event.
@@ -164,6 +113,18 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
   localOnClickButton_() {
     this.client_.loadPaymentData(super.getPaymentDataRequest_())
         .then(data => this.triggerAction_(data));
+  }
+
+  /**
+   * Trigger load payment data event with the given payment data
+   *
+   * @param {!PaymentData} paymentData payment data from load payment data function
+   * @private
+   */
+  triggerAction_(paymentData) {
+    const name = LOAD_PAYMENT_DATA_EVENT_NAME;
+    const event = createCustomEvent(this.win, `${TAG}.${name}`, paymentData);
+    this.actions_.trigger(this.element, name, event, ActionTrust.HIGH);
   }
 
   /** @override */
