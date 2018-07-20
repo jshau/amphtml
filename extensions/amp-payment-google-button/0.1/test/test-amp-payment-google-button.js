@@ -137,73 +137,67 @@ describes.realWin('amp-payment-google-button', {
       viewerMock.whenFirstVisible.returns(Promise.resolve());
       viewerMock.isTrustedViewer.returns(Promise.resolve(false));
 
-      commonPreBuildCallback = function(button) {
-        sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
-            .returns(Promise.resolve({'result': true}));
-      }
+      sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
+          .returns(Promise.resolve({'result': true}));
     });
 
     it('should call initialize payment client before render button', () => {
       const buttons = doc.getElementsByTagName('button');
       expect(buttons.length).to.equal(0);
 
-      return getAmpPaymentGoogleButton(
-          true /* isTestMode */, commonPreBuildCallback /*preBuildCallback*/).then(
-              gPayButton => {
-                const buttons = gPayButton.getElementsByTagName('button');
-                expect(buttons.length).to.equal(1);
-              });
+      return getAmpPaymentGoogleButton(true /* isTestMode */).then(
+          gPayButton => {
+            const buttons = gPayButton.getElementsByTagName('button');
+            expect(buttons.length).to.equal(1);
+          });
     });
 
     it('loads a button and displays the selected instrument', () => {
-      return getAmpPaymentGoogleButton(
-          true /* isTestMode */, commonPreBuildCallback /*preBuildCallback*/).then(
-              gPayButton => {
-                sandbox.stub(gPayButton.implementation_.client_, 'loadPaymentData')
-                    .returns(Promise.resolve({
-                      paymentMethodToken: {
-                        token: 'fakeToken',
-                      },
-                    }));
-                const trigger = sandbox.spy(
-                    gPayButton.implementation_.actions_, 'trigger');
+      return getAmpPaymentGoogleButton(true /* isTestMode */).then(
+          gPayButton => {
+            sandbox.stub(gPayButton.implementation_.client_, 'loadPaymentData')
+                .returns(Promise.resolve({
+                  paymentMethodToken: {
+                    token: 'fakeToken',
+                  },
+                }));
+            const trigger = sandbox.spy(
+                gPayButton.implementation_.actions_, 'trigger');
 
-                const buttons = gPayButton.getElementsByTagName('button');
-                expect(buttons.length).to.equal(1);
-                buttons.item(0).click();
+            const buttons = gPayButton.getElementsByTagName('button');
+            expect(buttons.length).to.equal(1);
+            buttons.item(0).click();
 
-                // Delay until the 'loadPaymentData' message response is processed.
-                return Services.timerFor(win).promise(50).then(() => {
-                  expect(trigger).to.be.calledWith(
-                      gPayButton,
-                      'loadPaymentData',
-                      sinon.match.any);
+            // Delay until the 'loadPaymentData' message response is processed.
+            return Services.timerFor(win).promise(50).then(() => {
+              expect(trigger).to.be.calledWith(
+                  gPayButton,
+                  'loadPaymentData',
+                  sinon.match.any);
 
-                  trigger.restore();
-                });
-              });
+              trigger.restore();
+            });
+          });
     });
 
     it('should throw error if isReadyToPay returns false', () => {
       expectAsyncConsoleError(/Google Pay is not supported/);
 
-      let preBuildCallback = function(button) {
-        sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
+      AmpPaymentGoogleBase.prototype.localIsReadyToPay_.restore();
+      sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
             .returns(Promise.resolve({'result': false}));
-      }
 
-      return getAmpPaymentGoogleButton(
-          true /* isTestMode */, preBuildCallback /*preBuildCallback*/).then(
-              gPayButton => {
-                throw new Error('This should not be called');
-              },
-              error => {
-                expect(error.message).to.equal('Google Pay is not supported');
-              });
+      return getAmpPaymentGoogleButton(true /* isTestMode */).then(
+          gPayButton => {
+            throw new Error('This should not be called');
+          },
+          error => {
+            expect(error.message).to.equal('Google Pay is not supported');
+          });
     });
   });
 
-  function getAmpPaymentGoogleButton(opt_isTestMode, opt_preBuildCallback) {
+  function getAmpPaymentGoogleButton(opt_isTestMode) {
     const button = doc.createElement('amp-payment-google-button');
     button.setAttribute('is-test-mode', opt_isTestMode);
 
@@ -213,10 +207,6 @@ describes.realWin('amp-payment-google-button', {
     button.appendChild(config);
 
     doc.body.appendChild(button);
-
-    if (opt_preBuildCallback) {
-      opt_preBuildCallback(button);
-    }
 
     return button.build()
         .then(() => button.layoutCallback())
