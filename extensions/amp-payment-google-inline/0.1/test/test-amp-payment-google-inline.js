@@ -16,6 +16,7 @@
 
 import '../amp-payment-google-inline';
 import * as sinon from 'sinon';
+import {Services} from '../../../../src/services';
 import {AmpFormService} from '../../../../extensions/amp-form/0.1/amp-form';
 import {mockServiceForDoc} from '../../../../testing/test-helper';
 
@@ -101,6 +102,9 @@ describes.realWin(
       });
 
       it('loads the inline payment iframe', () => {
+        const iframes = doc.getElementsByTagName('iframe');
+        expect(iframes.length).to.equal(0);
+
         // Send intial status change event for initiating the iframe component.
         win.postMessage(
             {
@@ -224,11 +228,6 @@ describes.realWin(
         return getAmpPaymentGoogleInline().then(gPayInline => {
           const iframes = gPayInline.getElementsByTagName('iframe');
           expect(iframes.length).to.equal(1);
-          iframeMock.sendIframeMessage
-              .withArgs(
-                  iframes[0], IFRAME_URL_ORIGIN, 'loadPaymentData',
-                  {data: {paymentMethodToken: PAYMENT_TOKEN}})
-              .returns();
 
           win.postMessage(
               {
@@ -236,6 +235,15 @@ describes.realWin(
                 data: {},
               },
               '*');
+
+          // Delay so that postMessage can be executed
+          return Services.timerFor(win).promise(1).then(() => {
+            assert(iframeMock.sendIframeMessage
+                .withArgs(
+                    iframes[0], IFRAME_URL_ORIGIN, 'loadPaymentData',
+                    {data: {paymentMethodToken: PAYMENT_TOKEN}}).calledOnce,
+                'loadPaymentData is not called');
+          });
         });
       });
 
@@ -254,11 +262,6 @@ describes.realWin(
         return getAmpPaymentGoogleInline().then(gPayInline => {
           const iframes = gPayInline.getElementsByTagName('iframe');
           expect(iframes.length).to.equal(1);
-          iframeMock.sendIframeMessage
-              .withArgs(
-                  iframes[0], IFRAME_URL_ORIGIN, 'loadPaymentData',
-                  sinon.match.any)
-              .throws('Should not call with this argument');
 
           win.postMessage(
               {
@@ -266,6 +269,15 @@ describes.realWin(
                 data: {},
               },
               '*');
+
+          // Delay so that postMessage can be executed
+          return Services.timerFor(win).promise(1).then(() => {
+            assert(iframeMock.sendIframeMessage
+                .withArgs(
+                    iframes[0], IFRAME_URL_ORIGIN, 'loadPaymentData',
+                    {data: {paymentMethodToken: PAYMENT_TOKEN}}).notCalled,
+                'loadPaymentData is called');
+          });
         });
       });
 
@@ -290,6 +302,12 @@ describes.realWin(
                 data: {},
               },
               '*');
+
+          // Delay so that postMessage can be executed
+          return Services.timerFor(win).promise(1).then(() => {
+            assert(viewerMock.sendMessage.withArgs('prefetchPaymentData', {})
+                .calledOnce, 'prefetchPaymentData is not called');
+          });
         });
       });
 
@@ -310,9 +328,6 @@ describes.realWin(
             return getAmpPaymentGoogleInline().then(gPayInline => {
               const iframes = gPayInline.getElementsByTagName('iframe');
               expect(iframes.length).to.equal(1);
-              iframeMock.sendIframeMessage.withArgs(
-                 iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
-                 {'result': true});
 
               win.postMessage(
                  {
@@ -320,6 +335,15 @@ describes.realWin(
                    data: {},
                  },
                  '*');
+
+              // Delay so that postMessage can be executed
+              return Services.timerFor(win).promise(1).then(() => {
+                assert(iframeMock.sendIframeMessage
+                    .withArgs(
+                        iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
+                        {'result': true}).calledOnce,
+                    "Didn't reply validation viewer request with true");
+              });
             });
       });
 
@@ -340,9 +364,6 @@ describes.realWin(
             return getAmpPaymentGoogleInline().then(gPayInline => {
               const iframes = gPayInline.getElementsByTagName('iframe');
               expect(iframes.length).to.equal(1);
-              iframeMock.sendIframeMessage.withArgs(
-                  iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
-                  {'result': false});
 
               win.postMessage(
                   {
@@ -350,12 +371,19 @@ describes.realWin(
                    data: {},
                   },
                   '*');
+
+              // Delay so that postMessage can be executed
+              return Services.timerFor(win).promise(1).then(() => {
+                assert(iframeMock.sendIframeMessage
+                    .withArgs(
+                        iframes[0], IFRAME_URL_ORIGIN, 'validateViewerReply',
+                        {'result': false}).calledOnce,
+                    "Didn't reply validation viewer request with false");
+              });
             });
       });
 
       it('should call logPaymentData if requested by iframe', function() {
-        viewerMock.sendMessage.withArgs('logPaymentData', {}).returns();
-
         // Send intial status change event for initiating the iframe component.
         win.postMessage(
             {
@@ -374,6 +402,12 @@ describes.realWin(
                 data: {},
               },
               '*');
+
+          // Delay so that postMessage can be executed
+          return Services.timerFor(win).promise(1).then(() => {
+            assert(viewerMock.sendMessage.withArgs('logPaymentData', {})
+                .calledOnce, 'logPaymentData is not called');
+          });
         });
       });
 
