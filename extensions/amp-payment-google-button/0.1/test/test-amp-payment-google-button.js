@@ -126,7 +126,7 @@ describes.realWin('amp-payment-google-button', {
   });
 
   describe('outside google context', () => {
-    let commonPreBuildCallback;
+    let localIsReadyToPayStub;
 
     beforeEach(() => {
       viewerMock = mockServiceForDoc(env.sandbox, env.ampdoc, 'viewer', [
@@ -137,7 +137,8 @@ describes.realWin('amp-payment-google-button', {
       viewerMock.whenFirstVisible.returns(Promise.resolve());
       viewerMock.isTrustedViewer.returns(Promise.resolve(false));
 
-      sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
+      localIsReadyToPayStub =
+          sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
           .returns(Promise.resolve({'result': true}));
     });
 
@@ -183,8 +184,7 @@ describes.realWin('amp-payment-google-button', {
     it('should throw error if isReadyToPay returns false', () => {
       expectAsyncConsoleError(/Google Pay is not supported/);
 
-      AmpPaymentGoogleBase.prototype.localIsReadyToPay_
-          .returns(Promise.resolve({'result': false}));
+      localIsReadyToPayStub.returns(Promise.resolve({'result': false}));
 
       return getAmpPaymentGoogleButton(true /* isTestMode */).then(
           gPayButton => {
