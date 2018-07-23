@@ -183,9 +183,8 @@ describes.realWin('amp-payment-google-button', {
     it('should throw error if isReadyToPay returns false', () => {
       expectAsyncConsoleError(/Google Pay is not supported/);
 
-      AmpPaymentGoogleBase.prototype.localIsReadyToPay_.restore();
-      sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
-            .returns(Promise.resolve({'result': false}));
+      AmpPaymentGoogleBase.prototype.localIsReadyToPay_
+          .returns(Promise.resolve({'result': false}));
 
       return getAmpPaymentGoogleButton(true /* isTestMode */).then(
           gPayButton => {
