@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {FromWorkerMessageDef, ToWorkerMessageDef} from './web-worker-defines';
 import {Services} from '../services';
 import {calculateEntryPointScriptUrl} from '../service/extension-location';
 import {dev} from '../log';
@@ -104,7 +103,9 @@ class AmpWorker {
       ampCors: false,
     }).then(res => res.text()).then(text => {
       // Workaround since Worker constructor only accepts same origin URLs.
-      const blob = new win.Blob([text], {type: 'text/javascript'});
+      const blob = new win.Blob([
+        text + '\n//# sourceurl=' + url,
+      ], {type: 'text/javascript'});
       const blobUrl = win.URL.createObjectURL(blob);
       this.worker_ = new win.Worker(blobUrl);
       this.worker_.onmessage = this.receiveMessage_.bind(this);
@@ -138,6 +139,7 @@ class AmpWorker {
    * @param {Window=} opt_localWin
    * @return {!Promise}
    * @private
+   * @restricted
    */
   sendMessage_(method, args, opt_localWin) {
     return this.fetchPromise_.then(() => {
@@ -147,8 +149,8 @@ class AmpWorker {
 
         const scope = this.idForWindow_(opt_localWin || this.win_);
 
-        /** @type {ToWorkerMessageDef} */
-        const message = {method, args, scope, id};
+        const message =
+          /** @type {ToWorkerMessageDef} */ ({method, args, scope, id});
         this.worker_./*OK*/postMessage(message);
       });
     });
@@ -162,7 +164,7 @@ class AmpWorker {
    */
   receiveMessage_(event) {
     const {method, returnValue, id} =
-    /** @type {FromWorkerMessageDef} */ (event.data);
+      /** @type {FromWorkerMessageDef} */ (event.data);
 
     const message = this.messages_[id];
     if (!message) {

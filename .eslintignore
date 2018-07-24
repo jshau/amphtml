@@ -1,8 +1,10 @@
 node_modules
 build
+build-system/tasks/visual-diff-wrapper.snippet.js
 dist
 dist.3p
 dist.tools
+out
 examples
 third_party
 test/coverage
