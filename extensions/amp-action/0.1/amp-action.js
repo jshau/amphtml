@@ -39,8 +39,6 @@ export class ActionService {
 
     /** @private @const {!../../../src/service/action-impl.ActionService} */
     this.action_ = Services.actionServiceForDoc(ampdoc);
-    this.action_.installActionHandler(
-        this.actionElement_, this.actionHandler_.bind(this), ActionTrust.HIGH);
 
     /** @private @const {!../../../src/service/variable-source.VariableSource} */
     this.variableSource_ = Services.urlReplacementsForDoc(ampdoc)
@@ -74,13 +72,23 @@ export class ActionService {
       user().info(TAG, 'Invalid AMP Action - no "id=amp-action" element');
       return this;
     }
+    return this.viewer_.isTrustedViewer().then(isTrustedViewer => {
+      if (!isTrustedViewer) {
+        this.enabled_ = false;
+        user().info(TAG, 'Disabling AMP Action since viewer is not trusted');
+        return this;
+      }
+      this.action_.installActionHandler(
+          this.actionElement_, this.actionHandler_.bind(this),
+          ActionTrust.HIGH);
 
-    this.variableSource_.set('IDENTITY_TOKEN', () => this.getIdToken_());
+      this.variableSource_.set('IDENTITY_TOKEN', () => this.getIdToken_());
 
-    this.viewer_.sendMessage('actionConfig', dict({
-      'config': this.configJson_,
-    }));
-    return this;
+      this.viewer_.sendMessage('actionConfig', dict({
+        'config': this.configJson_,
+      }));
+      return this;
+    });
   }
 
   /**

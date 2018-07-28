@@ -1,6 +1,7 @@
 import {ActionInvocation} from '../../../../src/service/action-impl';
 import {ActionService} from '../amp-action';
 import {Services} from '../../../../src/services';
+import {mockServiceForDoc} from '../../../../testing/test-helper';
 
 describes.fakeWin('ActionService', {
   amp: true,
@@ -9,10 +10,17 @@ describes.fakeWin('ActionService', {
   let document;
   let ampdoc;
   let element;
+  let viewerMock;
 
   beforeEach(() => {
     ampdoc = env.ampdoc;
     document = env.win.document;
+    viewerMock = mockServiceForDoc(env.sandbox, env.ampdoc, 'viewer', [
+      'isTrustedViewer',
+      'sendMessage',
+      'sendMessageAwaitResponse',
+    ]);
+    viewerMock.isTrustedViewer.returns(Promise.resolve(true));
 
     element = document.createElement('script');
     element.setAttribute('id', 'amp-action');
@@ -25,6 +33,18 @@ describes.fakeWin('ActionService', {
     const service = new ActionService(ampdoc);
     expect(service.enabled_).to.be.false;
     expect(service.actionElement_).to.be.undefined;
+  });
+
+  it('should disable service when the viewer is not trusted', () => {
+    viewerMock.isTrustedViewer.returns(Promise.resolve(false));
+    const config = {
+      'providerId': 'foo-bar',
+    };
+    element.textContent = JSON.stringify(config);
+    const service = new ActionService(ampdoc);
+    return service.start_().then(() => {
+      expect(service.enabled_).to.be.false;
+    });
   });
 
   it('should fail if config is malformed', () => {
@@ -41,12 +61,13 @@ describes.fakeWin('ActionService', {
     const service = new ActionService(ampdoc);
     expect(service.enabled_).to.be.true;
     expect(service.actionElement_).to.equal(element);
-    const sendMessageStub = sandbox.stub(service.viewer_, 'sendMessage');
-    service.start_();
-    expect(sendMessageStub).to.be.calledOnce;
-    expect(sendMessageStub.firstCall.args[0]).to.equal('actionConfig');
-    expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
-      'config': config,
+    const sendMessageStub = service.viewer_.sendMessage;
+    return service.start_().then(() => {
+      expect(sendMessageStub).to.be.calledOnce;
+      expect(sendMessageStub.firstCall.args[0]).to.equal('actionConfig');
+      expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
+        'config': config,
+      });
     });
   });
 
@@ -56,15 +77,18 @@ describes.fakeWin('ActionService', {
     };
     element.textContent = JSON.stringify(config);
     const service = new ActionService(ampdoc);
-    const sendMessageStub = sandbox.stub(service.viewer_, 'sendMessage');
+    const sendMessageStub = service.viewer_.sendMessage;
     const order = {
       'foo': 'bar',
     };
-    const invocation = new ActionInvocation(element, 'orderCompleted', order);
-    service.actionHandler_(invocation);
-    expect(sendMessageStub).to.be.calledOnce;
-    expect(sendMessageStub.firstCall.args[0]).to.equal('orderCompleted');
-    expect(sendMessageStub.firstCall.args[1]).to.deep.equal(order);
+    return service.start_().then(() => {
+      sendMessageStub.reset();
+      const invocation = new ActionInvocation(element, 'orderCompleted', order);
+      service.actionHandler_(invocation);
+      expect(sendMessageStub).to.be.calledOnce;
+      expect(sendMessageStub.firstCall.args[0]).to.equal('orderCompleted');
+      expect(sendMessageStub.firstCall.args[1]).to.deep.equal(order);
+    });
   });
 
   it('should fail to send orderCompleted if order is missing', () => {
@@ -73,10 +97,13 @@ describes.fakeWin('ActionService', {
     };
     element.textContent = JSON.stringify(config);
     const service = new ActionService(ampdoc);
-    const sendMessageStub = sandbox.stub(service.viewer_, 'sendMessage');
-    const invocation = new ActionInvocation(element, 'orderCompleted');
-    service.actionHandler_(invocation);
-    expect(sendMessageStub).to.not.be.called;
+    const sendMessageStub = service.viewer_.sendMessage;
+    return service.start_().then(() => {
+      sendMessageStub.reset();
+      const invocation = new ActionInvocation(element, 'orderCompleted');
+      service.actionHandler_(invocation);
+      expect(sendMessageStub).to.not.be.called;
+    });
   });
 
   it('should send handle the signIn action', () => {
@@ -85,15 +112,16 @@ describes.fakeWin('ActionService', {
     };
     element.textContent = JSON.stringify(config);
     const service = new ActionService(ampdoc);
-    const sendMessageStub = sandbox.stub(
-        service.viewer_, 'sendMessageAwaitResponse');
-    sendMessageStub.returns(Promise.reject());
-    const invocation = new ActionInvocation(element, 'signIn');
-    service.actionHandler_(invocation);
-    expect(sendMessageStub).to.be.calledOnce;
-    expect(sendMessageStub.firstCall.args[0]).to.equal('requestSignIn');
-    expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
-      providers: ['actions-on-google-gsi'],
+    const sendMessageStub = service.viewer_.sendMessageAwaitResponse;
+    return service.start_().then(() => {
+      sendMessageStub.returns(Promise.reject());
+      const invocation = new ActionInvocation(element, 'signIn');
+      service.actionHandler_(invocation);
+      expect(sendMessageStub).to.be.calledOnce;
+      expect(sendMessageStub.firstCall.args[0]).to.equal('requestSignIn');
+      expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
+        providers: ['actions-on-google-gsi'],
+      });
     });
   });
 
@@ -108,27 +136,27 @@ describes.fakeWin('ActionService', {
         callback();
       },
     };
-    service.start_();
-    const sendMessageStub = sandbox.stub(
-        service.viewer_, 'sendMessageAwaitResponse');
-    sendMessageStub.returns(Promise.resolve('fake_token'));
+    return service.start_().then(() => {
+      const sendMessageStub = service.viewer_.sendMessageAwaitResponse;
+      sendMessageStub.returns(Promise.resolve('fake_token'));
 
-    const urlReplacements = Services.urlReplacementsForDoc(ampdoc);
-    return urlReplacements
-        .expandUrlAsync('https://foo.com/bar?access_token=IDENTITY_TOKEN')
-        .then(url => {
-          expect(url).to.equal('https://foo.com/bar?access_token=fake_token');
-          expect(sendMessageStub).to.be.calledOnce;
-          expect(sendMessageStub.firstCall.args[0]).to.equal(
-              'getAccessTokenPassive');
-          expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
-            providers: ['actions-on-google-gsi'],
+      const urlReplacements = Services.urlReplacementsForDoc(ampdoc);
+      return urlReplacements
+          .expandUrlAsync('https://foo.com/bar?access_token=IDENTITY_TOKEN')
+          .then(url => {
+            expect(url).to.equal('https://foo.com/bar?access_token=fake_token');
+            expect(sendMessageStub).to.be.calledOnce;
+            expect(sendMessageStub.firstCall.args[0]).to.equal(
+                'getAccessTokenPassive');
+            expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
+              providers: ['actions-on-google-gsi'],
+            });
+            expect(document.documentElement).to.have.class(
+                'amp-action-identity-available');
+            expect(document.documentElement).not.to.have.class(
+                'amp-action-identity-unavailable');
           });
-          expect(document.documentElement).to.have.class(
-              'amp-action-identity-available');
-          expect(document.documentElement).not.to.have.class(
-              'amp-action-identity-unavailable');
-        });
+    });
   });
 
   it('should set the css classes if IDENTITY_TOKEN is unavailable', () => {
@@ -142,26 +170,26 @@ describes.fakeWin('ActionService', {
         callback();
       },
     };
-    service.start_();
-    const sendMessageStub = sandbox.stub(
-        service.viewer_, 'sendMessageAwaitResponse');
-    sendMessageStub.returns(Promise.reject());
+    return service.start_().then(() => {
+      const sendMessageStub = service.viewer_.sendMessageAwaitResponse;
+      sendMessageStub.returns(Promise.reject());
 
-    const urlReplacements = Services.urlReplacementsForDoc(ampdoc);
-    return urlReplacements
-        .expandUrlAsync('https://foo.com/bar?access_token=IDENTITY_TOKEN')
-        .then(url => {
-          expect(url).to.equal('https://foo.com/bar?access_token=');
-          expect(sendMessageStub).to.be.calledOnce;
-          expect(sendMessageStub.firstCall.args[0]).to.equal(
-              'getAccessTokenPassive');
-          expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
-            providers: ['actions-on-google-gsi'],
+      const urlReplacements = Services.urlReplacementsForDoc(ampdoc);
+      return urlReplacements
+          .expandUrlAsync('https://foo.com/bar?access_token=IDENTITY_TOKEN')
+          .then(url => {
+            expect(url).to.equal('https://foo.com/bar?access_token=');
+            expect(sendMessageStub).to.be.calledOnce;
+            expect(sendMessageStub.firstCall.args[0]).to.equal(
+                'getAccessTokenPassive');
+            expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
+              providers: ['actions-on-google-gsi'],
+            });
+            expect(document.documentElement).not.to.have.class(
+                'amp-action-identity-available');
+            expect(document.documentElement).to.have.class(
+                'amp-action-identity-unavailable');
           });
-          expect(document.documentElement).not.to.have.class(
-              'amp-action-identity-available');
-          expect(document.documentElement).to.have.class(
-              'amp-action-identity-unavailable');
-        });
+    });
   });
 });
