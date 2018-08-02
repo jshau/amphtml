@@ -920,7 +920,7 @@ export class AmpForm {
   /**
    * Executes the presubmit handlers.
    *
-   * @returns {!Promise}
+   * @return {!Promise}
    * @private
    */
   executePresubmitHandlers_() {
