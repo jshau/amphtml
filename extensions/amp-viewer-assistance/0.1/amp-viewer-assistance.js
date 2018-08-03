@@ -6,19 +6,20 @@ import {tryParseJson} from '../../../src/json';
 
 
 /** @const {string} */
-const TAG = 'amp-action';
+const TAG = 'amp-viewer-assistance';
 
+/** @const {string} */
 const GSI_TOKEN_PROVIDER = 'actions-on-google-gsi';
 
-export class ActionService {
+export class AmpViewerAssistance {
   /**
    * @param {!../../../src/service/ampdoc-impl.AmpDoc} ampdoc
    */
   constructor(ampdoc) {
-    const actionElement = ampdoc.getElementById('amp-action');
+    const assistanceElement = ampdoc.getElementById('amp-viewer-assistance');
 
     /** @const @private {boolean} */
-    this.enabled_ = !!actionElement;
+    this.enabled_ = !!assistanceElement;
     if (!this.enabled_) {
       return;
     }
@@ -27,11 +28,12 @@ export class ActionService {
     this.ampdoc_ = ampdoc;
 
     /** @const @private {!Element} */
-    this.actionElement_ = dev().assertElement(actionElement);
+    this.assistanceElement_ = dev().assertElement(assistanceElement);
 
     /** @const @private {!JsonObject} */
-    this.configJson_ = tryParseJson(this.actionElement_.textContent, e => {
-      throw user().createError('Failed to parse "amp-action" JSON: ' + e);
+    this.configJson_ = tryParseJson(this.assistanceElement_.textContent, e => {
+      throw user().createError(
+          'Failed to parse "amp-viewer-assistance" JSON: ' + e);
     });
 
     /** @private @const {!../../../src/service/viewer-impl.Viewer} */
@@ -69,7 +71,8 @@ export class ActionService {
    */
   start_() {
     if (!this.enabled_) {
-      user().info(TAG, 'Invalid AMP Action - no "id=amp-action" element');
+      user().info(
+          TAG, 'Invalid AMP Action - no "id=amp-viewer-assistance" element');
       return this;
     }
     return this.viewer_.isTrustedViewer().then(isTrustedViewer => {
@@ -79,7 +82,7 @@ export class ActionService {
         return this;
       }
       this.action_.installActionHandler(
-          this.actionElement_, this.actionHandler_.bind(this),
+          this.assistanceElement_, this.actionHandler_.bind(this),
           ActionTrust.HIGH);
 
       this.variableSource_.set('IDENTITY_TOKEN', () => this.getIdToken_());
@@ -118,7 +121,7 @@ export class ActionService {
       if (token) {
         this.setIdTokenStatus_(/*available=*/true);
         this.action_.trigger(
-            this.actionElement_, 'signedIn', null, ActionTrust.HIGH);
+            this.assistanceElement_, 'signedIn', null, ActionTrust.HIGH);
       }
     });
   }
@@ -129,8 +132,9 @@ export class ActionService {
    * @param {boolean} available
    */
   setIdTokenStatus_(available) {
-    this.toggleTopClass_('amp-action-identity-available', available);
-    this.toggleTopClass_('amp-action-identity-unavailable', !available);
+    this.toggleTopClass_('amp-viewer-assistance-identity-available', available);
+    this.toggleTopClass_(
+        'amp-viewer-assistance-identity-unavailable', !available);
   }
 
   /**
@@ -159,7 +163,7 @@ export class ActionService {
 
 // Register the extension services.
 AMP.extension(TAG, '0.1', function(AMP) {
-  AMP.registerServiceForDoc('aog-action', function(ampdoc) {
-    return new ActionService(ampdoc).start_();
+  AMP.registerServiceForDoc('amp-viewer-assistance', function(ampdoc) {
+    return new AmpViewerAssistance(ampdoc).start_();
   });
 });

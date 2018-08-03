@@ -1,9 +1,9 @@
 import {ActionInvocation} from '../../../../src/service/action-impl';
-import {ActionService} from '../amp-action';
+import {AmpViewerAssistance} from '../amp-viewer-assistance';
 import {Services} from '../../../../src/services';
 import {mockServiceForDoc} from '../../../../testing/test-helper';
 
-describes.fakeWin('ActionService', {
+describes.fakeWin('AmpViewerAssistance', {
   amp: true,
   location: 'https://pub.com/doc1',
 }, env => {
@@ -23,16 +23,16 @@ describes.fakeWin('ActionService', {
     viewerMock.isTrustedViewer.returns(Promise.resolve(true));
 
     element = document.createElement('script');
-    element.setAttribute('id', 'amp-action');
+    element.setAttribute('id', 'amp-viewer-assistance');
     element.setAttribute('type', 'application/json');
     document.body.appendChild(element);
   });
 
   it('should disable service when no config', () => {
     document.body.removeChild(element);
-    const service = new ActionService(ampdoc);
+    const service = new AmpViewerAssistance(ampdoc);
     expect(service.enabled_).to.be.false;
-    expect(service.actionElement_).to.be.undefined;
+    expect(service.assistanceElement_).to.be.undefined;
   });
 
   it('should disable service when the viewer is not trusted', () => {
@@ -41,7 +41,7 @@ describes.fakeWin('ActionService', {
       'providerId': 'foo-bar',
     };
     element.textContent = JSON.stringify(config);
-    const service = new ActionService(ampdoc);
+    const service = new AmpViewerAssistance(ampdoc);
     return service.start_().then(() => {
       expect(service.enabled_).to.be.false;
     });
@@ -49,7 +49,7 @@ describes.fakeWin('ActionService', {
 
   it('should fail if config is malformed', () => {
     expect(() => {
-      new ActionService(ampdoc);
+      new AmpViewerAssistance(ampdoc);
     }).to.throw(Error);
   });
 
@@ -58,9 +58,9 @@ describes.fakeWin('ActionService', {
       'providerId': 'foo-bar',
     };
     element.textContent = JSON.stringify(config);
-    const service = new ActionService(ampdoc);
+    const service = new AmpViewerAssistance(ampdoc);
     expect(service.enabled_).to.be.true;
-    expect(service.actionElement_).to.equal(element);
+    expect(service.assistanceElement_).to.equal(element);
     const sendMessageStub = service.viewer_.sendMessage;
     return service.start_().then(() => {
       expect(sendMessageStub).to.be.calledOnce;
@@ -76,7 +76,7 @@ describes.fakeWin('ActionService', {
       'providerId': 'foo-bar',
     };
     element.textContent = JSON.stringify(config);
-    const service = new ActionService(ampdoc);
+    const service = new AmpViewerAssistance(ampdoc);
     const sendMessageStub = service.viewer_.sendMessage;
     const order = {
       'foo': 'bar',
@@ -96,7 +96,7 @@ describes.fakeWin('ActionService', {
       'providerId': 'foo-bar',
     };
     element.textContent = JSON.stringify(config);
-    const service = new ActionService(ampdoc);
+    const service = new AmpViewerAssistance(ampdoc);
     const sendMessageStub = service.viewer_.sendMessage;
     return service.start_().then(() => {
       sendMessageStub.reset();
@@ -111,7 +111,7 @@ describes.fakeWin('ActionService', {
       'providerId': 'foo-bar',
     };
     element.textContent = JSON.stringify(config);
-    const service = new ActionService(ampdoc);
+    const service = new AmpViewerAssistance(ampdoc);
     const sendMessageStub = service.viewer_.sendMessageAwaitResponse;
     return service.start_().then(() => {
       sendMessageStub.returns(Promise.reject());
@@ -130,7 +130,7 @@ describes.fakeWin('ActionService', {
       'providerId': 'foo-bar',
     };
     element.textContent = JSON.stringify(config);
-    const service = new ActionService(ampdoc);
+    const service = new AmpViewerAssistance(ampdoc);
     service.vsync_ = {
       mutate: callback => {
         callback();
@@ -152,9 +152,9 @@ describes.fakeWin('ActionService', {
               providers: ['actions-on-google-gsi'],
             });
             expect(document.documentElement).to.have.class(
-                'amp-action-identity-available');
+                'amp-viewer-assistance-identity-available');
             expect(document.documentElement).not.to.have.class(
-                'amp-action-identity-unavailable');
+                'amp-viewer-assistance-identity-unavailable');
           });
     });
   });
@@ -164,7 +164,7 @@ describes.fakeWin('ActionService', {
       'providerId': 'foo-bar',
     };
     element.textContent = JSON.stringify(config);
-    const service = new ActionService(ampdoc);
+    const service = new AmpViewerAssistance(ampdoc);
     service.vsync_ = {
       mutate: callback => {
         callback();
@@ -186,9 +186,9 @@ describes.fakeWin('ActionService', {
               providers: ['actions-on-google-gsi'],
             });
             expect(document.documentElement).not.to.have.class(
-                'amp-action-identity-available');
+                'amp-viewer-assistance-identity-available');
             expect(document.documentElement).to.have.class(
-                'amp-action-identity-unavailable');
+                'amp-viewer-assistance-identity-unavailable');
           });
     });
   });

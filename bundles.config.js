@@ -335,6 +335,7 @@ exports.extensionBundles = [
     type: TYPES.MISC,
   },
   {name: 'amp-google-vrview-image', version: '0.1', type: TYPES.MISC},
+  {name: 'amp-viewer-assistance', version: '0.1', type: TYPES.MISC},
   {
     name: 'amp-viewer-integration',
     version: '0.1',
