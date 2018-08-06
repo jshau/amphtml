@@ -79,6 +79,7 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
             error => {
               this.user().error(
                   'Initialize payment client failed with error: ' + error);
+              return Promise.reject(error);
             })
         .then(response => {
           if (response['result']) {
