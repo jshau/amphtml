@@ -16,7 +16,6 @@
 
 import {AmpPaymentGoogleBase} from '../../../../src/payment-google-common';
 import '../amp-payment-google-button';
-import * as sinon from 'sinon';
 import {Services} from '../../../../src/services';
 import {mockServiceForDoc} from '../../../../testing/test-helper';
 

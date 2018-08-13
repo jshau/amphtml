@@ -15,7 +15,6 @@
  */
 
 import '../amp-payment-google-inline';
-import * as sinon from 'sinon';
 import {Services} from '../../../../src/services';
 import {AmpFormService} from '../../../../extensions/amp-form/0.1/amp-form';
 import {mockServiceForDoc} from '../../../../testing/test-helper';
@@ -57,9 +56,11 @@ describes.realWin(
           'sendMessageAwaitResponse',
           'whenFirstVisible',
           'whenNextVisible',
+          'canRenderTemplates',
         ]);
         viewerMock.whenFirstVisible.returns(Promise.resolve());
         viewerMock.whenNextVisible.returns(Promise.resolve());
+        viewerMock.canRenderTemplates.returns(false);
 
         iframeMock = mockServiceForDoc(
             env.sandbox, env.ampdoc, 'payment-google-inline',
@@ -180,6 +181,7 @@ describes.realWin(
       });
 
       it('should not set payment data if submit fails', () => {
+        expectAsyncConsoleError(/getSelectedPaymentData fail/);
         // Send intial status change event for initiating the iframe component.
         win.postMessage(
             {
