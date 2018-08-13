@@ -2,6 +2,7 @@ import {ActionTrust} from '../../../src/action-constants';
 import {Services} from '../../../src/services';
 import {dev, user} from '../../../src/log';
 import {dict} from '../../../src/utils/object';
+import {isExperimentOn} from '../../../src/experiments';
 import {tryParseJson} from '../../../src/json';
 
 
@@ -76,7 +77,8 @@ export class AmpViewerAssistance {
       return this;
     }
     return this.viewer_.isTrustedViewer().then(isTrustedViewer => {
-      if (!isTrustedViewer) {
+      if (!isTrustedViewer &&
+         !isExperimentOn(this.ampdoc_.win, 'amp-viewer-assistance-untrusted')) {
         this.enabled_ = false;
         user().info(TAG, 'Disabling AMP Action since viewer is not trusted');
         return this;
