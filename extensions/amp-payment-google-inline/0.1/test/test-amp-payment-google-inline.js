@@ -102,6 +102,27 @@ describes.realWin(
             });
       });
 
+      it('initializePaymentClientShouldBeCalledOnlyOnceForMutlipleBuild', () => {
+        const iframes = doc.getElementsByTagName('iframe');
+        expect(iframes.length).to.equal(0);
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('initializePaymentClient', sinon.match.any)
+            .returns(Promise.resolve({'shouldUseTestOverride': true}))
+            .calledOnce;
+
+        // Send intial status change event for initiating the iframe component.
+        win.postMessage(
+            {
+              message: 'paymentReadyStatusChanged',
+              data: {},
+            },
+            '*');
+
+        // Intentionally calling it twice
+        getAmpPaymentGoogleInline();
+        return getAmpPaymentGoogleInline();
+      });
+
       it('loads the inline payment iframe', () => {
         const iframes = doc.getElementsByTagName('iframe');
         expect(iframes.length).to.equal(0);

@@ -66,6 +66,9 @@ class AmpPaymentGoogleInline extends AmpPaymentGoogleBase {
 
   /** @override */
   buildCallback() {
+    if (this.actions_) {
+      return;
+    }
     super.buildCallback();
 
     this.actions_ = Services.actionServiceForDoc(this.element);
