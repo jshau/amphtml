@@ -79,6 +79,7 @@ export const UIType = {
  *    uistate: !UIType,
  *    consentid: ?string,
  *    currentpageid: string,
+ *    currentpageindex: number,
  * }}
  */
 export let State;
@@ -146,6 +147,11 @@ const actions = (state, action, data) => {
   switch (action) {
     // Triggers the amp-acess paywall.
     case Action.TOGGLE_ACCESS:
+      // Don't change the PAUSED_STATE if ACCESS_STATE is not changed.
+      if (state[StateProperty.ACCESS_STATE] === data) {
+        return state;
+      }
+
       return /** @type {!State} */ (Object.assign(
           {}, state, {
             [StateProperty.ACCESS_STATE]: !!data,

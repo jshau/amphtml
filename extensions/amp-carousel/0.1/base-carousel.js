@@ -15,6 +15,7 @@
  */
 import {KeyCodes} from '../../../src/utils/key-codes';
 import {Services} from '../../../src/services';
+import {isExperimentOn} from '../../../src/experiments';
 
 /**
  * @abstract
@@ -48,15 +49,6 @@ export class BaseCarousel extends AMP.BaseElement {
     this.buildButtons();
     this.setupGestures();
     this.setControlsState();
-
-    this.element.addEventListener(
-        'touchend', this.toggleControls_.bind(this));
-  }
-
-  /** Toggles the controls on tap/hover */
-  toggleControls_() {
-    this.setControlsState();
-    this.hintControls();
   }
 
   /** @override */
@@ -78,13 +70,28 @@ export class BaseCarousel extends AMP.BaseElement {
    * Builds a carousel button for next/prev.
    * @param {string} className
    * @param {function()} onInteraction
+   * @param {string} ariaName
    */
-  buildButton(className, onInteraction) {
+  buildButton(className, onInteraction, ariaName) {
     const button = this.element.ownerDocument.createElement('div');
     button.tabIndex = 0;
     button.classList.add('amp-carousel-button');
     button.classList.add(className);
     button.setAttribute('role', 'button');
+    const icon = this.element.ownerDocument.createElement('div');
+    if (isExperimentOn(this.win, 'amp-carousel-new-arrows')) {
+      icon.classList.add('amp-carousel-button-icon');
+      const isIE = Services.platformFor(this.win).isIe();
+      if (isIE) {
+        button.classList.add('amp-carousel-button-background');
+      }
+    } else {
+      icon.classList.add('amp-carousel-button-legacy');
+      button.classList.add('amp-carousel-button-background');
+    }
+
+    button.appendChild(icon);
+
     button.onkeydown = event => {
       if (event.keyCode == KeyCodes.ENTER || event.keyCode == KeyCodes.SPACE) {
         if (!event.defaultPrevented) {
@@ -94,6 +101,14 @@ export class BaseCarousel extends AMP.BaseElement {
       }
     };
     button.onclick = onInteraction;
+    if (this.element.hasAttribute(`data-${ariaName}-button-aria-label`)) {
+      button.setAttribute('aria-label',
+          this.element.getAttribute(`data-${ariaName}-button-aria-label`));
+    } else {
+      const upperCaseName = ariaName[0].toUpperCase() + ariaName.slice(1);
+      button.setAttribute('aria-label',
+          `${upperCaseName} item in carousel`);
+    }
 
     return button;
   }
@@ -104,12 +119,12 @@ export class BaseCarousel extends AMP.BaseElement {
   buildButtons() {
     this.prevButton_ = this.buildButton('amp-carousel-button-prev', () => {
       this.interactionPrev();
-    });
+    }, 'previous');
     this.element.appendChild(this.prevButton_);
 
     this.nextButton_ = this.buildButton('amp-carousel-button-next', () => {
       this.interactionNext();
-    });
+    }, 'next');
     this.element.appendChild(this.nextButton_);
   }
 
@@ -182,6 +197,10 @@ export class BaseCarousel extends AMP.BaseElement {
       Services.timerFor(this.win).delay(() => {
         this.mutateElement(() => {
           this.element.classList.remove(className);
+          this.prevButton_.classList.toggle(
+              'i-amphtml-screen-reader', !this.showControls_);
+          this.nextButton_.classList.toggle(
+              'i-amphtml-screen-reader', !this.showControls_);
         });
       }, 4000);
     });

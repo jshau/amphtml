@@ -19,7 +19,7 @@
   "amp-apester-media": 1,
   "amp-ima-video": 1,
   "amp-playbuzz": 1,
-  "amp-story-navigation-performance": 0,
+  "amp-story-navigation-performance": 1,
   "chunked-amp": 1,
   "amp-auto-ads": 1,
   "amp-auto-ads-adsense-holdout": 0.1,
@@ -42,6 +42,7 @@
   "url-replacement-v2": 1,
   "user-error-reporting": 1,
   "inline-styles": 1,
-  "doubleclickSraExp": 0.01,
-  "doubleclickSraReportExcludedBlock": 0.1
+  "doubleclickSraExp": 0,
+  "doubleclickSraReportExcludedBlock": 0.1,
+  "inabox-rov": 1
 }
