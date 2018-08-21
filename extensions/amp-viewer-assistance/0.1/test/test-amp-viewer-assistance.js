@@ -64,7 +64,8 @@ describes.fakeWin('AmpViewerAssistance', {
     const sendMessageStub = service.viewer_.sendMessage;
     return service.start_().then(() => {
       expect(sendMessageStub).to.be.calledOnce;
-      expect(sendMessageStub.firstCall.args[0]).to.equal('actionConfig');
+      expect(sendMessageStub.firstCall.args[0]).to
+          .equal('viewerAssistanceConfig');
       expect(sendMessageStub.firstCall.args[1]).to.deep.equal({
         'config': config,
       });

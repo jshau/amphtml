@@ -89,7 +89,7 @@ export class AmpViewerAssistance {
 
       this.variableSource_.set('IDENTITY_TOKEN', () => this.getIdToken_());
 
-      this.viewer_.sendMessage('actionConfig', dict({
+      this.viewer_.sendMessage('viewerAssistanceConfig',dict({
         'config': this.configJson_,
       }));
       return this;
