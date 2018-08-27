@@ -203,8 +203,7 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
   isReadyToPay_() {
     const paymentDataRequest = this.getPaymentDataRequest_();
     return this.viewer.sendMessageAwaitResponse(
-        'isReadyToPay',
-        {'allowedPaymentMethods': paymentDataRequest.allowedPaymentMethods});
+        'isReadyToPay', paymentDataRequest);
   }
 
   /**
@@ -218,9 +217,7 @@ export class AmpPaymentGoogleBase extends AMP.BaseElement {
    */
   localIsReadyToPay_() {
     const paymentDataRequest = this.getPaymentDataRequest_();
-    return this.client_.isReadyToPay(
-        {'allowedPaymentMethods': paymentDataRequest.allowedPaymentMethods}
-    );
+    return this.client_.isReadyToPay(paymentDataRequest);
   }
 
   /*

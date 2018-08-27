@@ -46,13 +46,13 @@ describes.realWin('amp-payment-google-button', {
       viewerMock.sendMessageAwaitResponse
           .withArgs('initializePaymentClient', {isTestMode: true})
           .returns(Promise.resolve());
-      viewerMock.sendMessageAwaitResponse
-          .withArgs('isReadyToPay', sinon.match.any)
-          .returns(Promise.resolve({'result': true}));
     });
 
 
     it('should call initialize payment client before render button', () => {
+      viewerMock.sendMessageAwaitResponse
+          .withArgs('isReadyToPay', sinon.match.any)
+          .returns(Promise.resolve({'result': true}));
       const buttons = doc.getElementsByTagName('button');
       expect(buttons.length).to.equal(0);
 
@@ -79,6 +79,9 @@ describes.realWin('amp-payment-google-button', {
     });
 
     it('loads a button and displays the selected instrument', () => {
+      viewerMock.sendMessageAwaitResponse
+          .withArgs('isReadyToPay', sinon.match.any)
+          .returns(Promise.resolve({'result': true}));
       return getAmpPaymentGoogleButton(true /* isTestMode */).then(
           gPayButton => {
             viewerMock.sendMessageAwaitResponse
@@ -120,6 +123,19 @@ describes.realWin('amp-payment-google-button', {
           },
           error => {
             expect(error.message).to.equal('Google Pay is not supported');
+          });
+    });
+
+    it('should send full paymentDataRequest for isReadyToPay', () => {
+      viewerMock.sendMessageAwaitResponse
+          .withArgs('isReadyToPay', {'testKey': 'testValue'})
+          .returns(Promise.resolve({'result': true}));
+
+      return getAmpPaymentGoogleButton(
+                 true /* isTestMode */, '{"testKey": "testValue"}')
+          .then(gPayButton => {
+            const buttons = gPayButton.getElementsByTagName('button');
+            expect(buttons.length).to.equal(1);
           });
     });
   });
@@ -195,13 +211,13 @@ describes.realWin('amp-payment-google-button', {
     });
   });
 
-  function getAmpPaymentGoogleButton(opt_isTestMode) {
+  function getAmpPaymentGoogleButton(opt_isTestMode, opt_requestStringJson) {
     const button = doc.createElement('amp-payment-google-button');
     button.setAttribute('is-test-mode', opt_isTestMode);
 
     const config = doc.createElement('script');
     config.setAttribute('type', 'application/json');
-    config.innerHTML = '{}';
+    config.innerHTML = opt_requestStringJson || '{}';
     button.appendChild(config);
 
     doc.body.appendChild(button);
