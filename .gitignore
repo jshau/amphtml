@@ -33,3 +33,4 @@ out/
 firebase
 .firebaserc
 firebase.json
+.firebase/

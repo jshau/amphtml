@@ -337,12 +337,14 @@ const forbiddenTerms = {
     whitelist: [
       // viewer-impl.sendMessage
       'src/error.js',
+      'src/service/navigation.js',
       'src/service/viewer-impl.js',
       'src/service/viewport/viewport-impl.js',
       'src/service/performance-impl.js',
       'src/service/resources-impl.js',
-      'extensions/amp-subscriptions/0.1/viewer-subscription-platform.js',
+      'extensions/amp-bind/0.1/bind-impl.js',
       'extensions/amp-app-banner/0.1/amp-app-banner.js',
+      'extensions/amp-subscriptions/0.1/viewer-subscription-platform.js',
       'extensions/amp-viewer-integration/0.1/highlight-handler.js',
 
       // iframe-messaging-client.sendMessage

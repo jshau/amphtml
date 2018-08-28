@@ -70,28 +70,15 @@ export class BaseCarousel extends AMP.BaseElement {
    * Builds a carousel button for next/prev.
    * @param {string} className
    * @param {function()} onInteraction
-   * @param {string} ariaName
+   * @param {string} internalStyles
    */
-  buildButton(className, onInteraction, ariaName) {
+  buildButton(className, onInteraction, internalStyles) {
     const button = this.element.ownerDocument.createElement('div');
     button.tabIndex = 0;
     button.classList.add('amp-carousel-button');
+    button.classList.add(internalStyles);
     button.classList.add(className);
     button.setAttribute('role', 'button');
-    const icon = this.element.ownerDocument.createElement('div');
-    if (isExperimentOn(this.win, 'amp-carousel-new-arrows')) {
-      icon.classList.add('amp-carousel-button-icon');
-      const isIE = Services.platformFor(this.win).isIe();
-      if (isIE) {
-        button.classList.add('amp-carousel-button-background');
-      }
-    } else {
-      icon.classList.add('amp-carousel-button-legacy');
-      button.classList.add('amp-carousel-button-background');
-    }
-
-    button.appendChild(icon);
-
     button.onkeydown = event => {
       if (event.keyCode == KeyCodes.ENTER || event.keyCode == KeyCodes.SPACE) {
         if (!event.defaultPrevented) {
@@ -101,14 +88,6 @@ export class BaseCarousel extends AMP.BaseElement {
       }
     };
     button.onclick = onInteraction;
-    if (this.element.hasAttribute(`data-${ariaName}-button-aria-label`)) {
-      button.setAttribute('aria-label',
-          this.element.getAttribute(`data-${ariaName}-button-aria-label`));
-    } else {
-      const upperCaseName = ariaName[0].toUpperCase() + ariaName.slice(1);
-      button.setAttribute('aria-label',
-          `${upperCaseName} item in carousel`);
-    }
 
     return button;
   }
@@ -119,12 +98,16 @@ export class BaseCarousel extends AMP.BaseElement {
   buildButtons() {
     this.prevButton_ = this.buildButton('amp-carousel-button-prev', () => {
       this.interactionPrev();
-    }, 'previous');
+    }, isExperimentOn(this.win, 'amp-carousel-new-arrows') ?
+      'i-amphtml-carousel-button-prev-new' :
+      'i-amphtml-carousel-button-prev-legacy');
     this.element.appendChild(this.prevButton_);
 
     this.nextButton_ = this.buildButton('amp-carousel-button-next', () => {
       this.interactionNext();
-    }, 'next');
+    }, isExperimentOn(this.win, 'amp-carousel-new-arrows') ?
+      'i-amphtml-carousel-button-next-new' :
+      'i-amphtml-carousel-button-next-legacy');
     this.element.appendChild(this.nextButton_);
   }
 
