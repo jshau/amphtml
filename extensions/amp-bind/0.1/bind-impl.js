@@ -43,6 +43,12 @@ import {startsWith} from '../../../src/string';
 const TAG = 'amp-bind';
 
 /**
+ * Custom maximum number of bindings supported by the AoG fork of AMP HTML.
+ * @private @const {number}
+ */
+const AOG_MAX_NUMBER_OF_BINDINGS_ = 2500;
+
+/**
  * Regular expression that identifies AMP CSS classes.
  * Includes 'i-amphtml-', '-amp-', and 'amp-' prefixes.
  * @type {!RegExp}
@@ -141,11 +147,11 @@ export class Bind {
      * time, caps "time to interactive" at ~2s after page load.
      *
      * User interactions can add new bindings (e.g. infinite scroll), so this
-     * can increase over time to a final limit of 2000 bindings.
+     * can increase over time to a final limit of 2500 bindings.
      *
      * @private {number}
      */
-    this.maxNumberOfBindings_ = 2500; // Based on ~2ms to parse an expression.
+    this.maxNumberOfBindings_ = AOG_MAX_NUMBER_OF_BINDINGS_; // Based on ~2ms to parse an expression.
 
     /** @const @private {!../../../src/service/resources-impl.Resources} */
     this.resources_ = Services.resourcesForDoc(ampdoc);
@@ -265,8 +271,8 @@ export class Bind {
 
     const expression = args[RAW_OBJECT_ARGS_KEY];
     if (expression) {
-      // Increment bindings limit by 500 on each invocation to a max of 2000.
-      this.maxNumberOfBindings_ = Math.min(2000,
+      // Increment bindings limit by 500 on each invocation to a max of 2500.
+      this.maxNumberOfBindings_ = Math.min(AOG_MAX_NUMBER_OF_BINDINGS_,
           Math.max(1000, this.maxNumberOfBindings_ + 500));
 
       // Signal first mutation (subsequent signals are harmless).
