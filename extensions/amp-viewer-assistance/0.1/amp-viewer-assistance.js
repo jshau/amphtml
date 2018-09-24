@@ -4,7 +4,7 @@ import {dev, user} from '../../../src/log';
 import {dict} from '../../../src/utils/object';
 import {isExperimentOn} from '../../../src/experiments';
 import {tryParseJson} from '../../../src/json';
-import {ajv} from '../../../third_party/ajv';
+
 
 /** @const {string} */
 const TAG = 'amp-viewer-assistance';
@@ -65,7 +65,6 @@ export class AmpViewerAssistance {
     }
     return null;
   }
-
 
   /**
    * @private
