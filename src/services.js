@@ -173,6 +173,16 @@ export class Services {
 
   /**
    * @param {!Element|!./service/ampdoc-impl.AmpDoc} elementOrAmpDoc
+   * @return {!Promise<?../extensions/amp-json-schema-validator/0.1/amp-json-schema-validator.AmpJsonSchemaValidator>}
+   */
+  static schemaValidatorForDocOrNull(elementOrAmpDoc) {
+    return /** @type {!Promise<?../extensions/amp-json-schema-validator/0.1/amp-json-schema-validator.AmpJsonSchemaValidator>} */ (
+      getElementServiceIfAvailableForDocInEmbedScope(
+          elementOrAmpDoc, 'bind', 'amp-json-schema-validator'));
+  }
+
+  /**
+   * @param {!Element|!./service/ampdoc-impl.AmpDoc} elementOrAmpDoc
    * @return {!Promise<!./service/cid-impl.Cid>}
    */
   static cidForDoc(elementOrAmpDoc) {

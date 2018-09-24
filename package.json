@@ -87,7 +87,7 @@
     "glob-move": "1.0.1",
     "globs-to-files": "1.0.0",
     "google-closure-compiler": "20180716.0.1",
-    "gulp": "3.9.1",
+    "gulp": "^3.9.1",
     "gulp-ava": "0.19.0",
     "gulp-closure-compiler": "0.4.0",
     "gulp-eslint": "5.0.0",
@@ -97,7 +97,7 @@
     "gulp-git": "2.7.0",
     "gulp-help": "1.6.1",
     "gulp-intercept": "0.1.0",
-    "gulp-load-plugins": "1.5.0",
+    "gulp-load-plugins": "^1.5.0",
     "gulp-regexp-sourcemaps": "1.0.1",
     "gulp-rename": "1.3.0",
     "gulp-sourcemaps": "2.6.4",
@@ -206,6 +206,8 @@
       "/test/fixtures/",
       "<rootDir>/build/"
     ],
-    "reporters": ["jest-dot-reporter"]
+    "reporters": [
+      "jest-dot-reporter"
+    ]
   }
 }

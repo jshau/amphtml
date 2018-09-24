@@ -483,21 +483,28 @@ export class Bind {
    * @return {!Promise}
    * @private
    */
-  premutate_(data) {
-    const ignoredKeys = [];
-    return this.initializePromise_.then(() => {
-      Object.keys(data.state).forEach(key => {
-        if (!this.overridableKeys_.includes(key)) {
-          delete data.state[key];
-          ignoredKeys.push(key);
-        }
-      });
-      if (ignoredKeys.length > 0) {
-        user().warn(TAG, 'Some state keys could not be premutated ' +
-              'because they are missing the overridable attribute: ' +
-              ignoredKeys.join(', '));
+  async premutate_(data) {
+    return Services.schemaValidatorForDocOrNull(this.element).then(schemaValidator => {
+      if(schemaValidator){
+        dev().assert(schemaValidator.validate('premutateSchema', data),
+        'Premutate data does not match specified Schema');
       }
-      return this.setState(data.state);
+
+      const ignoredKeys = [];
+      return this.initializePromise_.then(() => {
+        Object.keys(data.state).forEach(key => {
+          if (!this.overridableKeys_.includes(key)) {
+            delete data.state[key];
+            ignoredKeys.push(key);
+          }
+        });
+        if (ignoredKeys.length > 0) {
+          user().warn(TAG, 'Some state keys could not be premutated ' +
+                'because they are missing the overridable attribute: ' +
+                ignoredKeys.join(', '));
+        }
+        return this.setState(data.state);
+      });
     });
   }
 

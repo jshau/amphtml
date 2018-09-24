@@ -1,0 +1,11 @@
+https://github.com/epoberezkin/ajv
+License: MIT
+License File: https://github.com/epoberezkin/ajv/blob/master/LICENSE
+
+Description:
+AJV Is Another JSON Validator, used for validating JSON Schemas.
+Copy of minified AJV from release v6.5.3
+https://cdnjs.com/libraries/ajv
+
+Local Modifications:
+None

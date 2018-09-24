@@ -5819,7 +5819,7 @@ gulp-intercept@0.1.0:
   dependencies:
     event-stream "~3.0.18"
 
-gulp-load-plugins@1.5.0:
+gulp-load-plugins@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/gulp-load-plugins/-/gulp-load-plugins-1.5.0.tgz#4c419f7e5764d9a0e33061bab9618f81b73d4171"
   dependencies:
@@ -5960,7 +5960,7 @@ gulp-wrap@0.14.0:
     tryit "^1.0.1"
     vinyl-bufferstream "^1.0.1"
 
-gulp@3.9.1:
+gulp@^3.9.1:
   version "3.9.1"
   resolved "https://registry.yarnpkg.com/gulp/-/gulp-3.9.1.tgz#571ce45928dd40af6514fc4011866016c13845b4"
   dependencies:
