@@ -16,7 +16,11 @@
 
 import {AmpViewerIntegrationVariableService} from './variable-service';
 import {FormEventHandler} from './form-event-handler';
-import {HighlightHandler, HighlightInfoDef, getHighlightParam} from './highlight-handler';
+import {
+  HighlightHandler,
+  HighlightInfoDef,
+  getHighlightParam,
+} from './highlight-handler';
 import {
   Messaging,
   WindowPortEmulator,
@@ -30,11 +34,10 @@ import {
   getAmpdoc,
   registerServiceBuilder,
 } from '../../../src/service';
-import {getData} from '../../../src/event-helper';
+import {getData, listen, listenOnce} from '../../../src/event-helper';
 import {getSourceUrl} from '../../../src/url';
 import {installStylesForDoc} from '../../../src/style-installer';
 import {isIframed} from '../../../src/dom';
-import {listen, listenOnce} from '../../../src/event-helper';
 
 const TAG = 'amp-viewer-integration';
 const APP = '__AMPHTML__';
