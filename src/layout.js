@@ -337,6 +337,9 @@ export function applyStaticLayout(element) {
           element.querySelector('i-amphtml-sizer') || undefined;
     } else if (layout == Layout.NODISPLAY) {
       toggle(element, false);
+      // TODO(jridgewell): Temporary hack while SSR still adds an inline
+      // `display: none`
+      element['style']['display'] = '';
     }
     return layout;
   }
@@ -435,6 +438,9 @@ export function applyStaticLayout(element) {
     // CSS defines layout=nodisplay automatically with `display:none`. Thus
     // no additional styling is needed.
     toggle(element, false);
+    // TODO(jridgewell): Temporary hack while SSR still adds an inline
+    // `display: none`
+    element['style']['display'] = '';
   } else if (layout == Layout.FIXED) {
     setStyles(element, {
       width: dev().assertString(width),

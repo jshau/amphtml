@@ -264,12 +264,12 @@ export class AmpDatePicker extends AMP.BaseElement {
         Number(this.element.getAttribute('day-size')) || DEFAULT_DAY_SIZE;
 
     const blocked = this.element.getAttribute('blocked');
-    /** @private @const */
+    /** @private */
     this.blocked_ = new DatesList(
         blocked ? blocked.split(DATE_SEPARATOR) : []);
 
     const highlighted = this.element.getAttribute('highlighted');
-    /** @private @const */
+    /** @private */
     this.highlighted_ = new DatesList(
         highlighted ? highlighted.split(DATE_SEPARATOR) : []);
 
@@ -716,10 +716,16 @@ export class AmpDatePicker extends AMP.BaseElement {
    * @return {?Element}
    */
   setupDateField_(type) {
+    const input = Services.inputFor(this.win);
     const fieldSelector = this.element.getAttribute(`${type}-selector`);
     const existingField = this.getAmpDoc().getRootNode().querySelector(
         fieldSelector);
     if (existingField) {
+      if (!this.element.hasAttribute('touch-keyboard-editable') &&
+        this.mode_ == DatePickerMode.OVERLAY &&
+        input.isTouchDetected()) {
+        existingField.readOnly = true;
+      }
       return existingField;
     }
 
@@ -995,6 +1001,16 @@ export class AmpDatePicker extends AMP.BaseElement {
       }
       if (startDate || endDate) {
         this.handleSetDatesFromString_(startDate, endDate);
+      }
+
+      const blocked = json['blocked'];
+      if (blocked) {
+        this.blocked_ = new DatesList(blocked);
+      }
+
+      const highlighted = json['highlighted'];
+      if (highlighted) {
+        this.highlighted_ = new DatesList(highlighted);
       }
     });
   }
