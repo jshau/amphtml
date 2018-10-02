@@ -14,29 +14,16 @@
  * limitations under the License.
  */
 
-import {createButtonHelper} from '../../../third_party/payjs/src/button';
-import {ActionTrust} from '../../../src/action-constants';
-import {AmpPaymentGoogleBase} from '../../../src/payment-google-common';
-import {Services} from '../../../src/services';
-import {createCustomEvent} from '../../../src/event-helper';
+import {AmpPaymentGoogleIntegration} from '../../../src/service/payments/amp-payment-google';
+import {getServiceForDoc} from '../../../src/service';
 
 /** @const {string} */
 const TAG = 'amp-payment-google-button';
 
-/** @const {string} */
-const LOAD_PAYMENT_DATA_EVENT_NAME = 'loadPaymentData';
-
-class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
+class AmpPaymentGoogleButton extends AMP.BaseElement {
   /** @param {!AmpElement} element */
   constructor(element) {
     super(element);
-
-    // Initialize the action service. Note that accessing this service in the
-    // constructor throws an error in unit tests, so it is set in the
-    // buildCallback.
-
-    /** @private {?../../../src/service/action-impl.ActionService} */
-    this.actions_ = null;
   }
 
   /** @override */
@@ -46,85 +33,17 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
 
   /** @override */
   buildCallback() {
-    super.buildCallback();
-
-    this.actions_ = Services.actionServiceForDoc(this.element);
-
-    return this.viewer.whenFirstVisible()
-        .then(() => this.viewer.isTrustedViewer())
-        .then(result => {
-          if (result) {
-            return super.initializePaymentClient_()
-                .then(() => super.isReadyToPay_())
-                .then(response => {
-                  if (response['result']) {
-                    this.render_(() => this.onClickButton_());
-                  } else {
-                    throw new Error('Google Pay is not supported');
-                  }
-                });
-          } else {
-            // not in Google Viewer, use Google Payments Client directly
-            super.localInitializePaymentClient_();
-            return super.localIsReadyToPay_()
-                .then(response => {
-                  if (response['result']) {
-                    this.render_(() => this.localOnClickButton_());
-                  } else {
-                    throw new Error('Google Pay is not supported');
-                  }
-                });
-          }
-    });
+    /**
+     * @private {!AmpPaymentGoogleIntegration}
+     */
+    this.paymentsIntegration_ =
+        getServiceForDoc(this.win.document, 'amp-payment-google-integration');
+    this.paymentsIntegration_.startGpayButton(this.element);
   }
 
-  /**
-   * Render the google pay button with specified on click function.
-   *
-   * @param {!function(): void} onClickFunc on click function of the google pay button
-   * @private
-   */
-  render_(onClickFunc) {
-    this.element.appendChild(createButtonHelper({
-      onClick: onClickFunc,
-    }));
-  }
-
-  /**
-   * Request payment data, which contains necessary information to
-   * complete a payment, and trigger the load payment data event.
-   *
-   * @private
-   */
-  onClickButton_() {
-    this.viewer
-        .sendMessageAwaitResponse(
-            'loadPaymentData', super.getPaymentDataRequest_())
-        .then(data => this.triggerAction_(data));
-  }
-
-  /**
-   * Request payment data, which contains necessary information to
-   * complete a payment on local payments client and trigger the load
-   * payment data event.
-   *
-   * @private
-   */
-  localOnClickButton_() {
-    this.client_.loadPaymentData(super.getPaymentDataRequest_())
-        .then(data => this.triggerAction_(data));
-  }
-
-  /**
-   * Trigger load payment data event with the given payment data
-   *
-   * @param {!PaymentData} paymentData payment data from load payment data function
-   * @private
-   */
-  triggerAction_(paymentData) {
-    const name = LOAD_PAYMENT_DATA_EVENT_NAME;
-    const event = createCustomEvent(this.win, `${TAG}.${name}`, paymentData);
-    this.actions_.trigger(this.element, name, event, ActionTrust.HIGH);
+  /** @override */
+  layoutCallback() {
+    return this.paymentsIntegration_.whenButtonReady();
   }
 
   /** @override */
@@ -134,6 +53,9 @@ class AmpPaymentGoogleButton extends AmpPaymentGoogleBase {
 }
 
 AMP.extension(TAG, '0.1', AMP => {
+  AMP.registerServiceForDoc('amp-payment-google-integration', function(ampdoc) {
+    return new AmpPaymentGoogleIntegration(ampdoc);
+  });
   AMP.registerElement(TAG, AmpPaymentGoogleButton);
 });
 

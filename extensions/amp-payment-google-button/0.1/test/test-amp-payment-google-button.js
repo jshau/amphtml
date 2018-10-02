@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {AmpPaymentGoogleBase} from '../../../../src/payment-google-common';
+import {AmpPaymentGoogleIntegration} from '../../../../src/service/payments/amp-payment-google';
 import '../amp-payment-google-button';
 import {Services} from '../../../../src/services';
 import {mockServiceForDoc} from '../../../../testing/test-helper';
@@ -64,7 +64,6 @@ describes.realWin('amp-payment-google-button', {
     });
 
     it('should not render button if initialize payment client fails', () => {
-      expectAsyncConsoleError(/initialize payment client fails/);
       viewerMock.sendMessageAwaitResponse
           .withArgs('initializePaymentClient', {isTestMode: true})
           .returns(Promise.reject('initialize payment client fails'));
@@ -93,7 +92,8 @@ describes.realWin('amp-payment-google-button', {
                 }));
 
             const trigger = sandbox.spy(
-                gPayButton.implementation_.actions_, 'trigger');
+                gPayButton.implementation_.paymentsIntegration_.actions_,
+                'trigger');
 
             const buttons = gPayButton.getElementsByTagName('button');
             expect(buttons.length).to.equal(1);
@@ -112,7 +112,6 @@ describes.realWin('amp-payment-google-button', {
     });
 
     it('should throw error if isReadyToPay returns false', () => {
-      expectAsyncConsoleError(/Google Pay is not supported/);
       viewerMock.sendMessageAwaitResponse
           .withArgs('isReadyToPay', sinon.match.any)
           .returns(Promise.resolve({'result': false}));
@@ -122,7 +121,7 @@ describes.realWin('amp-payment-google-button', {
             throw new Error('This should not be called');
           },
           error => {
-            expect(error.message).to.equal('Google Pay is not supported');
+            expect(error).to.equal('Google Pay is not supported');
           });
     });
 
@@ -153,7 +152,7 @@ describes.realWin('amp-payment-google-button', {
       viewerMock.isTrustedViewer.returns(Promise.resolve(false));
 
       localIsReadyToPayStub =
-          sandbox.stub(AmpPaymentGoogleBase.prototype, 'localIsReadyToPay_')
+          sandbox.stub(AmpPaymentGoogleIntegration.prototype, 'localIsReadyToPay_')
           .returns(Promise.resolve({'result': true}));
     });
 
@@ -169,16 +168,20 @@ describes.realWin('amp-payment-google-button', {
     });
 
     it('loads a button and displays the selected instrument', () => {
-      return getAmpPaymentGoogleButton(true /* isTestMode */).then(
-          gPayButton => {
-            sandbox.stub(gPayButton.implementation_.client_, 'loadPaymentData')
+      return getAmpPaymentGoogleButton(true /* isTestMode */)
+          .then(gPayButton => {
+            sandbox
+                .stub(
+                    gPayButton.implementation_.paymentsIntegration_.client_,
+                    'loadPaymentData')
                 .returns(Promise.resolve({
                   paymentMethodToken: {
                     token: 'fakeToken',
                   },
                 }));
             const trigger = sandbox.spy(
-                gPayButton.implementation_.actions_, 'trigger');
+                gPayButton.implementation_.paymentsIntegration_.actions_,
+                'trigger');
 
             const buttons = gPayButton.getElementsByTagName('button');
             expect(buttons.length).to.equal(1);
@@ -197,8 +200,6 @@ describes.realWin('amp-payment-google-button', {
     });
 
     it('should throw error if isReadyToPay returns false', () => {
-      expectAsyncConsoleError(/Google Pay is not supported/);
-
       localIsReadyToPayStub.returns(Promise.resolve({'result': false}));
 
       return getAmpPaymentGoogleButton(true /* isTestMode */).then(
@@ -206,7 +207,7 @@ describes.realWin('amp-payment-google-button', {
             throw new Error('This should not be called');
           },
           error => {
-            expect(error.message).to.equal('Google Pay is not supported');
+            expect(error).to.equal('Google Pay is not supported');
           });
     });
   });
