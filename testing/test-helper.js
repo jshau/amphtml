@@ -49,10 +49,20 @@ export function stubServiceForDoc(sandbox, ampdoc, serviceId, method) {
 }
 
 export function mockServiceForDoc(sandbox, ampdoc, serviceId, methods) {
+  return mockServiceForDocWithVariables(
+    sandbox, ampdoc, serviceId, methods, {});
+}
+
+export function mockServiceForDocWithVariables(
+  sandbox, ampdoc, serviceId, methods, variables) {
   resetServiceForTesting(ampdoc.win, serviceId);
   const impl = {};
   methods.forEach(method => {
-    impl[method] = () => {};
+    if (variables[method]) {
+      impl[method] = variables[method];
+    } else {
+      impl[method] = () => {};
+    }
   });
   registerServiceBuilderForDoc(ampdoc, serviceId, () => impl);
   const mock = {};

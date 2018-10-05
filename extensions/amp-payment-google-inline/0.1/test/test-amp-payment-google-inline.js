@@ -17,7 +17,11 @@
 import '../amp-payment-google-inline';
 import {Services} from '../../../../src/services';
 import {AmpFormService} from '../../../../extensions/amp-form/0.1/amp-form';
-import {mockServiceForDoc} from '../../../../testing/test-helper';
+import {
+  mockServiceForDoc,
+  mockServiceForDocWithVariables
+} from '../../../../testing/test-helper';
+
 
 /** @const {string} */
 const IFRAME_URL = 'http://example.com/somesubpath';
@@ -50,14 +54,18 @@ describes.realWin(
 
         new AmpFormService(env.ampdoc);
 
-        viewerMock = mockServiceForDoc(env.sandbox, env.ampdoc, 'viewer', [
-          'isTrustedViewer',
-          'sendMessage',
-          'sendMessageAwaitResponse',
-          'whenFirstVisible',
-          'whenNextVisible',
-          'canRenderTemplates',
-        ]);
+        viewerMock = mockServiceForDocWithVariables(
+            env.sandbox, env.ampdoc, 'viewer', [
+              'ampdoc',
+              'canRenderTemplates',
+              'isTrustedViewer',
+              'sendMessage',
+              'sendMessageAwaitResponse',
+              'whenFirstVisible',
+              'whenNextVisible',
+            ], {
+              ampdoc: env.ampdoc,
+            });
         viewerMock.whenFirstVisible.returns(Promise.resolve());
         viewerMock.whenNextVisible.returns(Promise.resolve());
         viewerMock.canRenderTemplates.returns(false);
@@ -226,6 +234,69 @@ describes.realWin(
           const formSubmitted = new Promise((resolve, reject) => {
             expect(input.value).to.equal('');
             resolve();
+          });
+
+          const button = doc.getElementById(SUBMIT_BUTTON_ID);
+          button.click();
+
+          return formSubmitted;
+        });
+      });
+
+      it('should call loadPaymentData on submit when inline disabled', () => {
+        viewerMock.sendMessageAwaitResponse
+            .withArgs('loadPaymentData', sinon.match.any)
+            .returns(
+                Promise.resolve({paymentMethodToken: PAYMENT_TOKEN}));
+
+        // Send intial status event to render using bottom sheet.
+        win.postMessage(
+            {
+              message: 'useIframeContainer',
+            },
+            '*');
+
+        // Send intial status change event for initiating the iframe component.
+        win.postMessage(
+            {
+              message: 'paymentReadyStatusChanged',
+              data: true,
+            },
+            '*');
+
+        return getAmpPaymentGoogleInline().then(gPayInline => {
+          const iframes = gPayInline.getElementsByTagName('iframe');
+          expect(iframes.length).to.equal(1);
+
+          // Before the form is submitted, the hidden input is present, but
+          // empty.
+          const input = doc.getElementById(PAYMENT_DATA_INPUT_ID);
+          expect(input.value).to.equal('');
+
+          const formSubmitted = new Promise((resolve, reject) => {
+            xhrMock.fetch.callsFake((url, request) => {
+              // Without this try-catch block, the nested promise swallows up
+              // any failed expectations and the test times out instead of
+              // failing.
+              try {
+                // The data is present in the form when it is submitted.
+                const data =
+                  '{"paymentMethodToken":"' + PAYMENT_TOKEN + '"}';
+                expect(input.value).to.equal(data);
+                expect(Array.from(request.body.entries())).to.deep.include([
+                  PAYMENT_DATA_INPUT_ID,
+                  data,
+                ]);
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+
+              // Minimal mocked FetchResponse.
+              return {
+                json: () => Promise.resolve('{}'),
+              };
+            });
           });
 
           const button = doc.getElementById(SUBMIT_BUTTON_ID);

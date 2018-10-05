@@ -139,6 +139,8 @@ export class AmpPaymentGoogleIntegration {
     });
     /** @private {number} */
     this.iframeInitializeLatency_ = Date.now();
+    /** @private {boolean} */
+    this.iframeRenderWithBottomSheet_ = false;
 
     // Button
     /** @private {function()|null} */
@@ -414,6 +416,8 @@ export class AmpPaymentGoogleIntegration {
       });
     } else if (event.data.message === 'logPaymentData') {
       this.sendLogDataMessage_(event.data.data);
+    } else if (event.data.message === 'useIframeContainer') {
+      this.iframeRenderWithBottomSheet_ = true;
     }
   }
 
@@ -423,19 +427,35 @@ export class AmpPaymentGoogleIntegration {
    */
   populatePaymentToken_() {
     const input = this.getPaymentTokenInput_();
-    // If the payment token is not yet present, then we need to fetch it before
-    // submitting the form. This will happen if the user decides to use the
-    // default instrument shown in the inline widget.
-    return this.iframeService_
-        .sendIframeMessageAwaitResponse(
-            this.iframe_, this.iframeOrigin_, 'getSelectedPaymentData')
-        .then(
-            data => {
-              input.value = JSON.stringify(data);
-            },
-            error => {user().error(
-                TAG,
-                'Error on submission: ' + JSON.stringify(error));});
+
+    if (this.iframeRenderWithBottomSheet_) {
+      return this.viewer_
+          .sendMessageAwaitResponse(
+              'loadPaymentData', this.getPaymentDataRequest_())
+          .then(
+              data => input.value = JSON.stringify(data),
+              error => {
+                user().error(
+                    TAG,
+                    'Error on submission: ' + error);
+                return Promise.reject('loadPaymentData bottom sheet '
+                    + 'cancelled by the user or errored out.');
+              });
+    } else {
+      // If the payment token is not yet present, then we need to fetch it
+      // before submitting the form. This will happen if the user decides to use
+      // the default instrument shown in the inline widget.
+      return this.iframeService_
+          .sendIframeMessageAwaitResponse(
+              this.iframe_, this.iframeOrigin_, 'getSelectedPaymentData')
+          .then(
+              data => input.value = JSON.stringify(data),
+              error => {
+                user().error(
+                    TAG,
+                    'Error on submission: ' + error);
+              });
+    }
   }
 
   /**
