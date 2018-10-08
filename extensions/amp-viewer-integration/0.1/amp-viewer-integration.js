@@ -21,6 +21,7 @@ import {
   HighlightInfoDef,
   getHighlightParam,
 } from './highlight-handler';
+import {KeyboardHandler} from './keyboard-handler';
 import {
   Messaging,
   WindowPortEmulator,
@@ -197,6 +198,9 @@ export class AmpViewerIntegration {
     if (viewer.hasCapability('swipe')) {
       this.initTouchHandler_(messaging);
     }
+    if (viewer.hasCapability('keyboard')) {
+      this.initKeyboardHandler_(messaging);
+    }
     // TODO(williamsjosh): put this behind a capability check
     this.initFormEventHandler_(messaging);
     if (this.highlightHandler_ != null) {
@@ -228,6 +232,14 @@ export class AmpViewerIntegration {
    */
   initFormEventHandler_(messaging) {
     new FormEventHandler(this.win, messaging, getAmpdoc(this.win.document));
+  }
+
+  /**
+   * @param {!Messaging} messaging
+   * @private
+   */
+  initKeyboardHandler_(messaging) {
+    new KeyboardHandler(this.win, messaging);
   }
 }
 
