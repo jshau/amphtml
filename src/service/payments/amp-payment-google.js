@@ -111,7 +111,7 @@ export class AmpPaymentGoogleIntegration {
     // Common
     // Initialize services. Note that accessing the viewer service in the
     // constructor throws an error in unit tests, so it is set in buildCallback.
-    /** @private @const {!./service/viewer-impl.Viewer} */
+    /** @private @const {!../viewer-impl.Viewer} */
     this.viewer_ = null;
     /** @private {?PaymentsClient} */
     this.client_ = null;
